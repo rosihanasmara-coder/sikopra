@@ -1,0 +1,160 @@
+<%- include('partials/header', { title: 'Anggota' }) %>
+<%- include('partials/sidebar', { activePage: 'anggota' }) %>
+
+<div class="page-actions">
+  <button class="btn btn-primary" onclick="openModal('modalTambah')">+ Tambah Anggota</button>
+</div>
+
+<div class="section-card">
+  <h2 class="section-title">Daftar Anggota</h2>
+  <div class="table-wrapper">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>No</th>
+          <th>Nomor</th>
+          <th>Nama</th>
+          <th>Alamat</th>
+          <th>No HP</th>
+          <th>Tgl Bergabung</th>
+          <th>Status</th>
+          <th>Aksi</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% anggota.forEach((a, i) => { %>
+        <tr class="<%= a.status === 'nonaktif' ? 'row-inactive' : '' %>">
+          <td><%= i+1 %></td>
+          <td><strong><%= a.nomor_anggota %></strong></td>
+          <td><%= a.nama %></td>
+          <td><%= a.alamat || '-' %></td>
+          <td><%= a.no_hp || '-' %></td>
+          <td><%= a.tanggal_bergabung %></td>
+          <td><span class="badge badge-<%= a.status === 'aktif' ? 'success' : 'danger' %>"><%= a.status %></span></td>
+          <td>
+            <button class="btn btn-sm btn-warning" onclick="editAnggota(
+              '<%= a.id %>','<%= a.nama.replace(/'/g,&quot;\\'&quot;) %>',
+              '<%= (a.alamat||'').replace(/'/g,&quot;\\'&quot;) %>',
+              '<%= a.no_hp||'' %>','<%= a.tanggal_bergabung %>',
+              '<%= a.status %>','<%= (a.keterangan||'').replace(/'/g,&quot;\\'&quot;) %>'
+            )">Edit</button>
+            <form method="POST" action="/anggota/hapus" style="display:inline" onsubmit="return confirm('Hapus/nonaktifkan anggota ini?')">
+              <input type="hidden" name="id" value="<%= a.id %>">
+              <button class="btn btn-sm btn-danger" type="submit">Hapus</button>
+            </form>
+          </td>
+        </tr>
+        <% }) %>
+        <% if (anggota.length === 0) { %>
+        <tr><td colspan="8" class="text-center text-muted">Belum ada data anggota</td></tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal Tambah -->
+<div class="modal-overlay" id="modalTambah">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Tambah Anggota</h3>
+      <button class="modal-close" onclick="closeModal('modalTambah')">&times;</button>
+    </div>
+    <form method="POST" action="/anggota/tambah">
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Nama <span class="required">*</span></label>
+          <input type="text" name="nama" required class="form-control">
+        </div>
+        <div class="form-group">
+          <label>Alamat</label>
+          <input type="text" name="alamat" class="form-control">
+        </div>
+        <div class="form-group">
+          <label>No HP</label>
+          <input type="text" name="no_hp" class="form-control">
+        </div>
+        <div class="form-group">
+          <label>Tanggal Bergabung <span class="required">*</span></label>
+          <input type="date" name="tanggal_bergabung" required class="form-control" value="<%= new Date().toISOString().split('T')[0] %>">
+        </div>
+        <div class="form-group">
+          <label>Status</label>
+          <select name="status" class="form-control">
+            <option value="aktif">Aktif</option>
+            <option value="nonaktif">Nonaktif</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Keterangan</label>
+          <input type="text" name="keterangan" class="form-control">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('modalTambah')">Batal</button>
+        <button type="submit" class="btn btn-primary">Simpan</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal Edit -->
+<div class="modal-overlay" id="modalEdit">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Edit Anggota</h3>
+      <button class="modal-close" onclick="closeModal('modalEdit')">&times;</button>
+    </div>
+    <form method="POST" action="/anggota/edit">
+      <input type="hidden" name="id" id="editId">
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Nama <span class="required">*</span></label>
+          <input type="text" name="nama" id="editNama" required class="form-control">
+        </div>
+        <div class="form-group">
+          <label>Alamat</label>
+          <input type="text" name="alamat" id="editAlamat" class="form-control">
+        </div>
+        <div class="form-group">
+          <label>No HP</label>
+          <input type="text" name="no_hp" id="editNoHp" class="form-control">
+        </div>
+        <div class="form-group">
+          <label>Tanggal Bergabung <span class="required">*</span></label>
+          <input type="date" name="tanggal_bergabung" id="editTanggal" required class="form-control">
+        </div>
+        <div class="form-group">
+          <label>Status</label>
+          <select name="status" id="editStatus" class="form-control">
+            <option value="aktif">Aktif</option>
+            <option value="nonaktif">Nonaktif</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Keterangan</label>
+          <input type="text" name="keterangan" id="editKeterangan" class="form-control">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('modalEdit')">Batal</button>
+        <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function editAnggota(id, nama, alamat, no_hp, tanggal, status, keterangan) {
+  document.getElementById('editId').value = id;
+  document.getElementById('editNama').value = nama;
+  document.getElementById('editAlamat').value = alamat;
+  document.getElementById('editNoHp').value = no_hp;
+  document.getElementById('editTanggal').value = tanggal;
+  document.getElementById('editStatus').value = status;
+  document.getElementById('editKeterangan').value = keterangan;
+  openModal('modalEdit');
+}
+</script>
+
+<%- include('partials/footer') %>

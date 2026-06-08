@@ -1,0 +1,200 @@
+<%- include('partials/header', { title: 'Laporan Anggota' }) %>
+<%- include('partials/sidebar', { activePage: 'laporan' }) %>
+
+<div class="page-actions no-print">
+  <% if (anggota) { %>
+  <button class="btn btn-primary" onclick="window.print()">🖨️ Cetak Laporan</button>
+  <% } %>
+</div>
+
+<div class="section-card no-print">
+  <form method="GET" action="/laporan-anggota" class="filter-form">
+    <div class="filter-row">
+      <div class="form-group">
+        <label>Pilih Anggota</label>
+        <select name="anggota_id" class="form-control" required onchange="this.form.submit()">
+          <option value="">-- Pilih Anggota --</option>
+          <% anggotaList.forEach(a => { %>
+          <option value="<%= a.id %>" <%= selectedId == a.id ? 'selected' : '' %>><%= a.nomor_anggota %> - <%= a.nama %></option>
+          <% }) %>
+        </select>
+      </div>
+    </div>
+  </form>
+</div>
+
+<% if (anggota) { %>
+<div class="laporan-print">
+  <div class="print-header">
+    <h2><%= namaKoperasi %></h2>
+    <h3>LAPORAN ANGGOTA</h3>
+    <hr>
+  </div>
+
+  <!-- Identitas -->
+  <div class="section-card">
+    <h2 class="section-title">Identitas Anggota</h2>
+    <table class="detail-table">
+      <tr><th>Nomor Anggota</th><td><%= anggota.nomor_anggota %></td></tr>
+      <tr><th>Nama</th><td><%= anggota.nama %></td></tr>
+      <tr><th>Alamat</th><td><%= anggota.alamat || '-' %></td></tr>
+      <tr><th>No HP</th><td><%= anggota.no_hp || '-' %></td></tr>
+      <tr><th>Tanggal Bergabung</th><td><%= anggota.tanggal_bergabung %></td></tr>
+      <tr><th>Status</th><td><span class="badge badge-<%= anggota.status === 'aktif' ? 'success' : 'danger' %>"><%= anggota.status %></span></td></tr>
+    </table>
+  </div>
+
+  <!-- Ringkasan Simpanan -->
+  <div class="section-card">
+    <h2 class="section-title">Ringkasan Simpanan</h2>
+    <div class="cards-grid">
+      <div class="card">
+        <div class="card-body">
+          <div class="card-label">Simpanan Pokok</div>
+          <div class="card-value text-primary">Rp <%= ringkasan.pokok.toLocaleString('id-ID') %></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-body">
+          <div class="card-label">Simpanan Wajib</div>
+          <div class="card-value text-primary">Rp <%= ringkasan.wajib.toLocaleString('id-ID') %></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-body">
+          <div class="card-label">Simpanan Sukarela</div>
+          <div class="card-value text-primary">Rp <%= ringkasan.sukarela.toLocaleString('id-ID') %></div>
+        </div>
+      </div>
+      <div class="card card-primary">
+        <div class="card-body">
+          <div class="card-label">Total Simpanan</div>
+          <div class="card-value">Rp <%= ringkasan.totalSimpanan.toLocaleString('id-ID') %></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ringkasan Pinjaman -->
+  <div class="section-card">
+    <h2 class="section-title">Ringkasan Pinjaman</h2>
+    <div class="cards-grid">
+      <div class="card">
+        <div class="card-body">
+          <div class="card-label">Total Pinjaman</div>
+          <div class="card-value text-warning">Rp <%= ringkasan.totalPinjaman.toLocaleString('id-ID') %></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-body">
+          <div class="card-label">Total Angsuran Pokok</div>
+          <div class="card-value text-success">Rp <%= ringkasan.totalAngsuran.toLocaleString('id-ID') %></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-body">
+          <div class="card-label">Saldo Pinjaman</div>
+          <div class="card-value text-danger">Rp <%= ringkasan.saldoPinjaman.toLocaleString('id-ID') %></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-body">
+          <div class="card-label">Total Jasa Pinjaman</div>
+          <div class="card-value text-info">Rp <%= ringkasan.totalJasa.toLocaleString('id-ID') %></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SHU -->
+  <div class="section-card">
+    <h2 class="section-title">Hak SHU</h2>
+    <div class="cards-grid">
+      <div class="card">
+        <div class="card-body">
+          <div class="card-label">SHU dari Pinjaman</div>
+          <div class="card-value text-primary">Rp <%= Math.round(shu.shuPinjaman).toLocaleString('id-ID') %></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-body">
+          <div class="card-label">SHU dari Simpanan</div>
+          <div class="card-value text-primary">Rp <%= Math.round(shu.shuSimpanan).toLocaleString('id-ID') %></div>
+        </div>
+      </div>
+      <div class="card card-success">
+        <div class="card-body">
+          <div class="card-label">Total Hak SHU</div>
+          <div class="card-value">Rp <%= Math.round(shu.totalShu).toLocaleString('id-ID') %></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Riwayat Simpanan -->
+  <div class="section-card">
+    <h2 class="section-title">Riwayat Transaksi Simpanan</h2>
+    <div class="table-wrapper">
+      <table class="data-table">
+        <thead>
+          <tr><th>Tanggal</th><th>Tahun Buku</th><th>Jenis</th><th class="text-right">Jumlah</th><th>Keterangan</th></tr>
+        </thead>
+        <tbody>
+          <% riwayatSimpanan.forEach(s => { %>
+          <tr>
+            <td><%= s.tanggal %></td>
+            <td><%= s.tahun_buku %></td>
+            <td><span class="badge badge-<%= s.jenis === 'pokok' ? 'primary' : s.jenis === 'wajib' ? 'info' : 'success' %>"><%= s.jenis %></span></td>
+            <td class="text-right">Rp <%= s.jumlah.toLocaleString('id-ID') %></td>
+            <td><%= s.keterangan || '-' %></td>
+          </tr>
+          <% }) %>
+          <% if (riwayatSimpanan.length === 0) { %>
+          <tr><td colspan="5" class="text-center text-muted">Belum ada transaksi simpanan</td></tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Riwayat Pinjaman -->
+  <div class="section-card">
+    <h2 class="section-title">Riwayat Transaksi Pinjaman</h2>
+    <div class="table-wrapper">
+      <table class="data-table">
+        <thead>
+          <tr><th>Tanggal</th><th>Tahun Buku</th><th>Jenis</th><th class="text-right">Jumlah</th><th>Keterangan</th></tr>
+        </thead>
+        <tbody>
+          <% riwayatPinjaman.forEach(p => { %>
+          <tr>
+            <td><%= p.tanggal %></td>
+            <td><%= p.tahun_buku %></td>
+            <td>
+              <span class="badge badge-<%= p.jenis === 'pinjaman' ? 'primary' : p.jenis === 'angsuran_pokok' ? 'success' : 'warning' %>">
+                <%= p.jenis === 'pinjaman' ? 'Pinjaman' : p.jenis === 'angsuran_pokok' ? 'Angsuran Pokok' : 'Jasa Pinjaman' %>
+              </span>
+            </td>
+            <td class="text-right">Rp <%= p.jumlah.toLocaleString('id-ID') %></td>
+            <td><%= p.keterangan || '-' %></td>
+          </tr>
+          <% }) %>
+          <% if (riwayatPinjaman.length === 0) { %>
+          <tr><td colspan="5" class="text-center text-muted">Belum ada transaksi pinjaman</td></tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="print-footer">
+    <p>Dicetak pada: <%= new Date().toLocaleDateString('id-ID', {weekday:'long',year:'numeric',month:'long',day:'numeric'}) %></p>
+  </div>
+</div>
+<% } else { %>
+<div class="section-card">
+  <p class="text-center text-muted">Pilih anggota untuk melihat laporan</p>
+</div>
+<% } %>
+
+<%- include('partials/footer') %>

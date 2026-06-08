@@ -1,0 +1,65 @@
+<%- include('partials/header', { title: 'Log Perubahan' }) %>
+<%- include('partials/sidebar', { activePage: 'logPerubahan' }) %>
+
+<!-- Filter -->
+<div class="section-card">
+  <form method="GET" action="/log-perubahan" class="filter-form">
+    <div class="filter-row">
+      <div class="form-group">
+        <label>Tabel</label>
+        <select name="tabel" class="form-control">
+          <option value="">-- Semua --</option>
+          <option value="anggota" <%= filter.tabel === 'anggota' ? 'selected' : '' %>>Anggota</option>
+          <option value="simpanan" <%= filter.tabel === 'simpanan' ? 'selected' : '' %>>Simpanan</option>
+          <option value="pinjaman" <%= filter.tabel === 'pinjaman' ? 'selected' : '' %>>Pinjaman</option>
+          <option value="tahun_buku" <%= filter.tabel === 'tahun_buku' ? 'selected' : '' %>>Tahun Buku</option>
+          <option value="parameter" <%= filter.tabel === 'parameter' ? 'selected' : '' %>>Parameter</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Jenis</label>
+        <select name="jenis" class="form-control">
+          <option value="">-- Semua --</option>
+          <option value="tambah" <%= filter.jenis === 'tambah' ? 'selected' : '' %>>Tambah</option>
+          <option value="edit" <%= filter.jenis === 'edit' ? 'selected' : '' %>>Edit</option>
+          <option value="hapus" <%= filter.jenis === 'hapus' ? 'selected' : '' %>>Hapus</option>
+        </select>
+      </div>
+      <div class="form-group align-end">
+        <button type="submit" class="btn btn-primary">Filter</button>
+        <a href="/log-perubahan" class="btn btn-secondary">Reset</a>
+      </div>
+    </div>
+  </form>
+</div>
+
+<div class="section-card">
+  <h2 class="section-title">Log Perubahan Data (<%= logs.length %> entri)</h2>
+  <div class="table-wrapper">
+    <table class="data-table">
+      <thead>
+        <tr><th>Waktu</th><th>Jenis</th><th>Tabel</th><th>Record ID</th><th>Keterangan</th></tr>
+      </thead>
+      <tbody>
+        <% logs.forEach(l => { %>
+        <tr>
+          <td style="white-space:nowrap"><%= l.waktu %></td>
+          <td>
+            <span class="badge badge-<%= l.jenis === 'tambah' ? 'success' : l.jenis === 'edit' ? 'warning' : 'danger' %>">
+              <%= l.jenis %>
+            </span>
+          </td>
+          <td><%= l.tabel %></td>
+          <td><%= l.record_id || '-' %></td>
+          <td><%= l.keterangan || '-' %></td>
+        </tr>
+        <% }) %>
+        <% if (logs.length === 0) { %>
+        <tr><td colspan="5" class="text-center text-muted">Belum ada log perubahan</td></tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<%- include('partials/footer') %>

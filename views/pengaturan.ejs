@@ -1,0 +1,51 @@
+<%- include('partials/header', { title: 'Pengaturan' }) %>
+<%- include('partials/sidebar', { activePage: 'pengaturan' }) %>
+
+<div class="section-card">
+  <h2 class="section-title">Pengaturan Sistem</h2>
+  <form method="POST" action="/pengaturan/simpan">
+    <div class="form-group">
+      <label>Nama Koperasi</label>
+      <input type="text" name="nama_koperasi" class="form-control" value="<%= param.nama_koperasi || '' %>" required>
+    </div>
+    <div class="form-group">
+      <label>Tahun Aktif</label>
+      <input type="number" name="tahun_aktif" class="form-control" value="<%= param.tahun_aktif || new Date().getFullYear() %>" min="2000" max="2099" required>
+    </div>
+    <div class="form-group">
+      <label>Persentase Cadangan (%)</label>
+      <input type="number" name="persen_cadangan" class="form-control" value="<%= param.persen_cadangan || 2 %>" min="0" max="100" step="0.1" required>
+      <small class="form-hint">Persentase dari SHU koperasi yang dialokasikan sebagai cadangan</small>
+    </div>
+    <div class="form-group">
+      <label>Persentase SHU Peminjam (%)</label>
+      <input type="number" name="persen_shu_peminjam" class="form-control" value="<%= param.persen_shu_peminjam || 59 %>" min="0" max="100" step="0.1" required>
+      <small class="form-hint">Persentase SHU yang dibagi berdasarkan jasa pinjaman anggota</small>
+    </div>
+    <div class="form-group">
+      <label>Persentase SHU Simpanan (%)</label>
+      <input type="number" name="persen_shu_simpanan" class="form-control" value="<%= param.persen_shu_simpanan || 39 %>" min="0" max="100" step="0.1" required>
+      <small class="form-hint">Persentase SHU yang dibagi berdasarkan jumlah simpanan anggota</small>
+    </div>
+    <div class="form-group">
+      <label>Jasa Pinjaman Default (%)</label>
+      <input type="number" name="jasa_pinjaman_default" class="form-control" value="<%= param.jasa_pinjaman_default || 5 %>" min="0" max="100" step="0.1" required>
+      <small class="form-hint">Persentase jasa pinjaman yang digunakan saat membuat pinjaman baru</small>
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">💾 Simpan Pengaturan</button>
+    </div>
+  </form>
+</div>
+
+<div class="section-card">
+  <h2 class="section-title">Informasi Sistem</h2>
+  <table class="detail-table">
+    <tr><th>Versi Aplikasi</th><td>1.0.0</td></tr>
+    <tr><th>Database</th><td>SQLite (better-sqlite3)</td></tr>
+    <tr><th>Framework</th><td>Node.js + Express.js</td></tr>
+    <tr><th>Template Engine</th><td>EJS</td></tr>
+  </table>
+</div>
+
+<%- include('partials/footer') %>

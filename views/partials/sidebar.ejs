@@ -1,0 +1,59 @@
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo">🏦</div>
+    <div class="sidebar-title"><%= param.nama_koperasi || 'SiKopra' %></div>
+    <div class="sidebar-year">Tahun <%= param.tahun_aktif || new Date().getFullYear() %></div>
+  </div>
+  <ul class="sidebar-nav">
+    <li><a href="/" class="<%= locals.activePage === 'dashboard' ? 'active' : '' %>">
+      <span class="nav-icon">📊</span> Dashboard
+    </a></li>
+    <li><a href="/anggota" class="<%= locals.activePage === 'anggota' ? 'active' : '' %>">
+      <span class="nav-icon">👥</span> Anggota
+    </a></li>
+    <li><a href="/simpanan" class="<%= locals.activePage === 'simpanan' ? 'active' : '' %>">
+      <span class="nav-icon">💰</span> Simpanan
+    </a></li>
+    <li><a href="/pinjaman" class="<%= locals.activePage === 'pinjaman' ? 'active' : '' %>">
+      <span class="nav-icon">🏷️</span> Pinjaman
+    </a></li>
+    <li><a href="/shu" class="<%= locals.activePage === 'shu' ? 'active' : '' %>">
+      <span class="nav-icon">📈</span> SHU
+    </a></li>
+    <li class="nav-separator">Laporan</li>
+    <li><a href="/laporan-anggota" class="<%= locals.activePage === 'laporan' ? 'active' : '' %>">
+      <span class="nav-icon">📋</span> Laporan Anggota
+    </a></li>
+    <li><a href="/rekonsiliasi" class="<%= locals.activePage === 'rekonsiliasi' ? 'active' : '' %>">
+      <span class="nav-icon">🔍</span> Rekonsiliasi
+    </a></li>
+    <li><a href="/anomali" class="<%= locals.activePage === 'anomali' ? 'active' : '' %>">
+      <span class="nav-icon">⚠️</span> Anomali
+    </a></li>
+    <li class="nav-separator">Pengaturan</li>
+    <li><a href="/tahun-buku" class="<%= locals.activePage === 'tahunBuku' ? 'active' : '' %>">
+      <span class="nav-icon">📅</span> Tahun Buku
+    </a></li>
+    <li><a href="/log-perubahan" class="<%= locals.activePage === 'logPerubahan' ? 'active' : '' %>">
+      <span class="nav-icon">📝</span> Log Perubahan
+    </a></li>
+    <li><a href="/pengaturan" class="<%= locals.activePage === 'pengaturan' ? 'active' : '' %>">
+      <span class="nav-icon">⚙️</span> Pengaturan
+    </a></li>
+  </ul>
+</nav>
+<div class="main-content">
+  <header class="topbar">
+    <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
+    <h1 class="topbar-title"><%= typeof title !== 'undefined' ? title : 'Dashboard' %></h1>
+    <div class="topbar-info">
+      <%= param.nama_koperasi || 'SiKopra' %> &bull; Tahun <%= param.tahun_aktif || new Date().getFullYear() %>
+    </div>
+  </header>
+  <div class="content-area">
+    <% if (locals.msg && msg) { %>
+    <div class="alert alert-<%= msgType || 'info' %>">
+      <%= msg %>
+      <button onclick="this.parentElement.style.display='none'" class="alert-close">&times;</button>
+    </div>
+    <% } %>

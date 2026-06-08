@@ -1,0 +1,222 @@
+<%- include('partials/header', { title: 'Simpanan' }) %>
+<%- include('partials/sidebar', { activePage: 'simpanan' }) %>
+
+<div class="page-actions">
+  <button class="btn btn-primary" onclick="openModal('modalTambah')">+ Tambah Simpanan</button>
+</div>
+
+<!-- Filter -->
+<div class="section-card">
+  <form method="GET" action="/simpanan" class="filter-form">
+    <div class="filter-row">
+      <div class="form-group">
+        <label>Tahun Buku</label>
+        <select name="tahun" class="form-control">
+          <option value="">-- Semua --</option>
+          <% tahunList.forEach(t => { %>
+          <option value="<%= t.tahun %>" <%= filter.tahun == t.tahun ? 'selected' : '' %>><%= t.tahun %> (<%= t.status %>)</option>
+          <% }) %>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Anggota</label>
+        <select name="anggota_id" class="form-control">
+          <option value="">-- Semua --</option>
+          <% anggotaList.forEach(a => { %>
+          <option value="<%= a.id %>" <%= filter.anggota_id == a.id ? 'selected' : '' %>><%= a.nomor_anggota %> - <%= a.nama %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Jenis</label>
+        <select name="jenis" class="form-control">
+          <option value="">-- Semua --</option>
+          <option value="pokok" <%= filter.jenis === 'pokok' ? 'selected' : '' %>>Pokok</option>
+          <option value="wajib" <%= filter.jenis === 'wajib' ? 'selected' : '' %>>Wajib</option>
+          <option value="sukarela" <%= filter.jenis === 'sukarela' ? 'selected' : '' %>>Sukarela</option>
+        </select>
+      </div>
+      <div class="form-group align-end">
+        <button type="submit" class="btn btn-primary">Filter</button>
+        <a href="/simpanan" class="btn btn-secondary">Reset</a>
+      </div>
+    </div>
+  </form>
+</div>
+
+<div class="section-card">
+  <h2 class="section-title">Daftar Simpanan</h2>
+  <div class="table-wrapper">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>No</th>
+          <th>Tanggal</th>
+          <th>Tahun Buku</th>
+          <th>Anggota</th>
+          <th>Jenis</th>
+          <th>Jumlah</th>
+          <th>Keterangan</th>
+          <th>Aksi</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% simpanan.forEach((s, i) => { %>
+        <% const locked = tahunList.find(t => t.tahun == s.tahun_buku && t.status === 'terkunci'); %>
+        <tr>
+          <td><%= i+1 %></td>
+          <td><%= s.tanggal %></td>
+          <td><%= s.tahun_buku %> <% if (locked) { %><span class="badge badge-danger">Terkunci</span><% } %></td>
+          <td><%= s.nomor_anggota %> - <%= s.nama %></td>
+          <td><span class="badge badge-<%= s.jenis === 'pokok' ? 'primary' : s.jenis === 'wajib' ? 'info' : 'success' %>"><%= s.jenis %></span></td>
+          <td class="text-right">Rp <%= s.jumlah.toLocaleString('id-ID') %></td>
+          <td><%= s.keterangan || '-' %></td>
+          <td>
+            <% if (!locked) { %>
+            <button class="btn btn-sm btn-warning" onclick="editSimpanan(
+              '<%= s.id %>','<%= s.anggota_id %>','<%= s.jenis %>',
+              '<%= s.jumlah %>','<%= s.tanggal %>','<%= s.tahun_buku %>',
+              '<%= (s.keterangan||'').replace(/'/g,&quot;\\'&quot;) %>'
+            )">Edit</button>
+            <form method="POST" action="/simpanan/hapus" style="display:inline" onsubmit="return confirm('Hapus simpanan ini?')">
+              <input type="hidden" name="id" value="<%= s.id %>">
+              <button class="btn btn-sm btn-danger" type="submit">Hapus</button>
+            </form>
+            <% } else { %>
+            <span class="text-muted">Terkunci</span>
+            <% } %>
+          </td>
+        </tr>
+        <% }) %>
+        <% if (simpanan.length === 0) { %>
+        <tr><td colspan="8" class="text-center text-muted">Belum ada data</td></tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal Tambah -->
+<div class="modal-overlay" id="modalTambah">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Tambah Simpanan</h3>
+      <button class="modal-close" onclick="closeModal('modalTambah')">&times;</button>
+    </div>
+    <form method="POST" action="/simpanan/tambah">
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Anggota <span class="required">*</span></label>
+          <select name="anggota_id" required class="form-control">
+            <option value="">-- Pilih Anggota --</option>
+            <% anggotaList.forEach(a => { %>
+            <option value="<%= a.id %>"><%= a.nomor_anggota %> - <%= a.nama %></option>
+            <% }) %>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Jenis <span class="required">*</span></label>
+          <select name="jenis" required class="form-control">
+            <option value="pokok">Pokok</option>
+            <option value="wajib">Wajib</option>
+            <option value="sukarela">Sukarela</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Jumlah <span class="required">*</span></label>
+          <input type="number" name="jumlah" required min="1" class="form-control">
+        </div>
+        <div class="form-group">
+          <label>Tanggal <span class="required">*</span></label>
+          <input type="date" name="tanggal" required class="form-control" value="<%= new Date().toISOString().split('T')[0] %>">
+        </div>
+        <div class="form-group">
+          <label>Tahun Buku <span class="required">*</span></label>
+          <select name="tahun_buku" required class="form-control">
+            <% tahunList.forEach(t => { %>
+            <option value="<%= t.tahun %>" <%= t.status !== 'terkunci' ? '' : 'disabled' %>><%= t.tahun %> <%= t.status === 'terkunci' ? '(Terkunci)' : '' %></option>
+            <% }) %>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Keterangan</label>
+          <input type="text" name="keterangan" class="form-control">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('modalTambah')">Batal</button>
+        <button type="submit" class="btn btn-primary">Simpan</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal Edit -->
+<div class="modal-overlay" id="modalEdit">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Edit Simpanan</h3>
+      <button class="modal-close" onclick="closeModal('modalEdit')">&times;</button>
+    </div>
+    <form method="POST" action="/simpanan/edit">
+      <input type="hidden" name="id" id="editId">
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Anggota <span class="required">*</span></label>
+          <select name="anggota_id" id="editAnggota" required class="form-control">
+            <% anggotaList.forEach(a => { %>
+            <option value="<%= a.id %>"><%= a.nomor_anggota %> - <%= a.nama %></option>
+            <% }) %>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Jenis <span class="required">*</span></label>
+          <select name="jenis" id="editJenis" required class="form-control">
+            <option value="pokok">Pokok</option>
+            <option value="wajib">Wajib</option>
+            <option value="sukarela">Sukarela</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Jumlah <span class="required">*</span></label>
+          <input type="number" name="jumlah" id="editJumlah" required min="1" class="form-control">
+        </div>
+        <div class="form-group">
+          <label>Tanggal <span class="required">*</span></label>
+          <input type="date" name="tanggal" id="editTanggal" required class="form-control">
+        </div>
+        <div class="form-group">
+          <label>Tahun Buku <span class="required">*</span></label>
+          <select name="tahun_buku" id="editTahun" required class="form-control">
+            <% tahunList.forEach(t => { %>
+            <option value="<%= t.tahun %>"><%= t.tahun %></option>
+            <% }) %>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Keterangan</label>
+          <input type="text" name="keterangan" id="editKeterangan" class="form-control">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('modalEdit')">Batal</button>
+        <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function editSimpanan(id, anggota_id, jenis, jumlah, tanggal, tahun_buku, keterangan) {
+  document.getElementById('editId').value = id;
+  document.getElementById('editAnggota').value = anggota_id;
+  document.getElementById('editJenis').value = jenis;
+  document.getElementById('editJumlah').value = jumlah;
+  document.getElementById('editTanggal').value = tanggal;
+  document.getElementById('editTahun').value = tahun_buku;
+  document.getElementById('editKeterangan').value = keterangan;
+  openModal('modalEdit');
+}
+</script>
+
+<%- include('partials/footer') %>

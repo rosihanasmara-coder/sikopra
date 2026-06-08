@@ -1,0 +1,201 @@
+<%- include('partials/header', { title: 'Pinjaman' }) %>
+<%- include('partials/sidebar', { activePage: 'pinjaman' }) %>
+
+<div class="page-actions">
+  <button class="btn btn-primary" onclick="openModal('modalPinjaman')">+ Tambah Pinjaman</button>
+  <button class="btn btn-success" onclick="openModal('modalAngsuran')">+ Tambah Angsuran</button>
+</div>
+
+<!-- Saldo per Anggota -->
+<div class="section-card">
+  <h2 class="section-title">Saldo Pinjaman per Anggota</h2>
+  <div class="table-wrapper">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Anggota</th>
+          <th class="text-right">Total Pinjaman</th>
+          <th class="text-right">Total Angsuran Pokok</th>
+          <th class="text-right">Saldo Pinjaman</th>
+          <th class="text-right">Total Jasa</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% saldoPerAnggota.forEach(s => { %>
+        <tr>
+          <td><%= s.nomor_anggota %> - <%= s.nama %></td>
+          <td class="text-right">Rp <%= s.total_pinjaman.toLocaleString('id-ID') %></td>
+          <td class="text-right">Rp <%= s.total_angsuran.toLocaleString('id-ID') %></td>
+          <td class="text-right <% if(s.saldo < 0){ %>text-danger<% } else if(s.saldo > 0){ %>text-warning<% } %>">
+            Rp <%= s.saldo.toLocaleString('id-ID') %>
+          </td>
+          <td class="text-right">Rp <%= s.total_jasa.toLocaleString('id-ID') %></td>
+        </tr>
+        <% }) %>
+        <% if (saldoPerAnggota.length === 0) { %>
+        <tr><td colspan="5" class="text-center text-muted">Belum ada data</td></tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Riwayat Transaksi -->
+<div class="section-card">
+  <h2 class="section-title">Riwayat Transaksi Pinjaman</h2>
+  <div class="table-wrapper">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>No</th>
+          <th>Tanggal</th>
+          <th>Tahun Buku</th>
+          <th>Anggota</th>
+          <th>Jenis</th>
+          <th class="text-right">Jumlah</th>
+          <th>Keterangan</th>
+          <th>Aksi</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% pinjaman.forEach((p, i) => { %>
+        <% const locked = tahunList.find(t => t.tahun == p.tahun_buku && t.status === 'terkunci'); %>
+        <tr>
+          <td><%= i+1 %></td>
+          <td><%= p.tanggal %></td>
+          <td><%= p.tahun_buku %> <% if (locked) { %><span class="badge badge-danger">🔒</span><% } %></td>
+          <td><%= p.nomor_anggota %> - <%= p.nama %></td>
+          <td>
+            <span class="badge badge-<%= p.jenis === 'pinjaman' ? 'primary' : p.jenis === 'angsuran_pokok' ? 'success' : 'warning' %>">
+              <%= p.jenis === 'pinjaman' ? 'Pinjaman' : p.jenis === 'angsuran_pokok' ? 'Angsuran Pokok' : 'Jasa Pinjaman' %>
+            </span>
+          </td>
+          <td class="text-right">Rp <%= p.jumlah.toLocaleString('id-ID') %></td>
+          <td><%= p.keterangan || '-' %></td>
+          <td>
+            <% if (!locked) { %>
+            <form method="POST" action="/pinjaman/hapus" style="display:inline" onsubmit="return confirm('Hapus transaksi ini?')">
+              <input type="hidden" name="id" value="<%= p.id %>">
+              <button class="btn btn-sm btn-danger" type="submit">Hapus</button>
+            </form>
+            <% } else { %>
+            <span class="text-muted">Terkunci</span>
+            <% } %>
+          </td>
+        </tr>
+        <% }) %>
+        <% if (pinjaman.length === 0) { %>
+        <tr><td colspan="8" class="text-center text-muted">Belum ada data</td></tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal Tambah Pinjaman -->
+<div class="modal-overlay" id="modalPinjaman">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Tambah Pinjaman Baru</h3>
+      <button class="modal-close" onclick="closeModal('modalPinjaman')">&times;</button>
+    </div>
+    <form method="POST" action="/pinjaman/tambah">
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Anggota <span class="required">*</span></label>
+          <select name="anggota_id" required class="form-control">
+            <option value="">-- Pilih Anggota --</option>
+            <% anggotaList.forEach(a => { %>
+            <option value="<%= a.id %>"><%= a.nomor_anggota %> - <%= a.nama %></option>
+            <% }) %>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Jumlah Pinjaman <span class="required">*</span></label>
+          <input type="number" name="jumlah" required min="1" class="form-control" id="jumlahPinjaman" oninput="hitungJasa()">
+        </div>
+        <div class="form-group">
+          <label>Jasa Pinjaman (<%= jasaDefault %>%) - otomatis</label>
+          <input type="number" name="jasa_pinjaman" id="jasaPinjaman" class="form-control" readonly value="0">
+        </div>
+        <div class="form-group">
+          <label>Tanggal <span class="required">*</span></label>
+          <input type="date" name="tanggal" required class="form-control" value="<%= new Date().toISOString().split('T')[0] %>">
+        </div>
+        <div class="form-group">
+          <label>Tahun Buku <span class="required">*</span></label>
+          <select name="tahun_buku" required class="form-control">
+            <% tahunList.forEach(t => { %>
+            <option value="<%= t.tahun %>" <%= t.status !== 'terkunci' ? '' : 'disabled' %>><%= t.tahun %> <%= t.status === 'terkunci' ? '(Terkunci)' : '' %></option>
+            <% }) %>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Keterangan</label>
+          <input type="text" name="keterangan" class="form-control">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('modalPinjaman')">Batal</button>
+        <button type="submit" class="btn btn-primary">Simpan</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal Tambah Angsuran -->
+<div class="modal-overlay" id="modalAngsuran">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Tambah Angsuran</h3>
+      <button class="modal-close" onclick="closeModal('modalAngsuran')">&times;</button>
+    </div>
+    <form method="POST" action="/pinjaman/angsuran">
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Anggota <span class="required">*</span></label>
+          <select name="anggota_id" required class="form-control">
+            <option value="">-- Pilih Anggota --</option>
+            <% saldoPerAnggota.filter(s => s.saldo > 0).forEach(s => { %>
+            <option value="<%= s.id %>"><%= s.nomor_anggota %> - <%= s.nama %> (Saldo: Rp <%= s.saldo.toLocaleString('id-ID') %>)</option>
+            <% }) %>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Angsuran Pokok <span class="required">*</span></label>
+          <input type="number" name="angsuran_pokok" required min="1" class="form-control">
+        </div>
+        <div class="form-group">
+          <label>Tanggal <span class="required">*</span></label>
+          <input type="date" name="tanggal" required class="form-control" value="<%= new Date().toISOString().split('T')[0] %>">
+        </div>
+        <div class="form-group">
+          <label>Tahun Buku <span class="required">*</span></label>
+          <select name="tahun_buku" required class="form-control">
+            <% tahunList.forEach(t => { %>
+            <option value="<%= t.tahun %>" <%= t.status !== 'terkunci' ? '' : 'disabled' %>><%= t.tahun %></option>
+            <% }) %>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Keterangan</label>
+          <input type="text" name="keterangan" class="form-control">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('modalAngsuran')">Batal</button>
+        <button type="submit" class="btn btn-success">Simpan Angsuran</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+const jasaPersen = <%= jasaDefault %> / 100;
+function hitungJasa() {
+  const jumlah = parseFloat(document.getElementById('jumlahPinjaman').value) || 0;
+  document.getElementById('jasaPinjaman').value = Math.round(jumlah * jasaPersen);
+}
+</script>
+
+<%- include('partials/footer') %>

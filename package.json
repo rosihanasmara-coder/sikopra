@@ -1,0 +1,15 @@
+{
+  "name": "sikopra",
+  "version": "1.0.0",
+  "description": "Sistem Informasi Koperasi RT",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "nodemon app.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "ejs": "^3.1.9",
+    "better-sqlite3": "^9.4.3"
+  }
+}

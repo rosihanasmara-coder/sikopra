@@ -1,0 +1,139 @@
+<%- include('partials/header', { title: 'Dashboard' }) %>
+<%- include('partials/sidebar', { activePage: 'dashboard' }) %>
+
+<div class="cards-grid">
+  <div class="card card-primary">
+    <div class="card-icon">👥</div>
+    <div class="card-body">
+      <div class="card-label">Total Anggota Aktif</div>
+      <div class="card-value"><%= totalAnggota %></div>
+    </div>
+  </div>
+  <div class="card card-success">
+    <div class="card-icon">💰</div>
+    <div class="card-body">
+      <div class="card-label">Total Simpanan</div>
+      <div class="card-value">Rp <%= totalSimpanan.toLocaleString('id-ID') %></div>
+    </div>
+  </div>
+  <div class="card card-info">
+    <div class="card-icon">🏷️</div>
+    <div class="card-body">
+      <div class="card-label">Total Pinjaman Disalurkan</div>
+      <div class="card-value">Rp <%= totalPinjaman.toLocaleString('id-ID') %></div>
+    </div>
+  </div>
+  <div class="card card-warning">
+    <div class="card-icon">📊</div>
+    <div class="card-body">
+      <div class="card-label">Saldo Pinjaman Beredar</div>
+      <div class="card-value">Rp <%= totalSaldoPinjaman.toLocaleString('id-ID') %></div>
+    </div>
+  </div>
+</div>
+
+<div class="cards-grid">
+  <div class="card">
+    <div class="card-icon">🏦</div>
+    <div class="card-body">
+      <div class="card-label">Simpanan Pokok</div>
+      <div class="card-value">Rp <%= totalPokok.toLocaleString('id-ID') %></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-icon">📅</div>
+    <div class="card-body">
+      <div class="card-label">Simpanan Wajib</div>
+      <div class="card-value">Rp <%= totalWajib.toLocaleString('id-ID') %></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-icon">🎁</div>
+    <div class="card-body">
+      <div class="card-label">Simpanan Sukarela</div>
+      <div class="card-value">Rp <%= totalSukarela.toLocaleString('id-ID') %></div>
+    </div>
+  </div>
+  <div class="card card-danger">
+    <div class="card-icon">📈</div>
+    <div class="card-body">
+      <div class="card-label">Total Jasa Pinjaman (SHU)</div>
+      <div class="card-value">Rp <%= totalJasaPinjaman.toLocaleString('id-ID') %></div>
+    </div>
+  </div>
+</div>
+
+<!-- SHU Summary -->
+<div class="section-card">
+  <h2 class="section-title">Ringkasan SHU</h2>
+  <div class="cards-grid">
+    <div class="card">
+      <div class="card-body">
+        <div class="card-label">SHU Koperasi (Jasa Pinjaman)</div>
+        <div class="card-value text-primary">Rp <%= shuKoperasi.toLocaleString('id-ID') %></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-body">
+        <div class="card-label">Cadangan (<%= param.persen_cadangan %>%)</div>
+        <div class="card-value text-warning">Rp <%= cadangan.toLocaleString('id-ID') %></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-body">
+        <div class="card-label">SHU Dibagi ke Anggota</div>
+        <div class="card-value text-success">Rp <%= shuAnggota.toLocaleString('id-ID') %></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Chart -->
+<% if (chartData && chartData.length > 0) { %>
+<div class="section-card">
+  <h2 class="section-title">Grafik Simpanan vs Saldo Pinjaman per Anggota</h2>
+  <div class="chart-container" id="barChart"></div>
+</div>
+<script>
+const chartData = <%- JSON.stringify(chartData) %>;
+const container = document.getElementById('barChart');
+if (chartData.length > 0) {
+  const maxVal = Math.max(...chartData.map(d => Math.max(d.total_simpanan, d.saldo_pinjaman)));
+  const barWidth = 40;
+  const gap = 20;
+  const groupWidth = barWidth * 2 + gap;
+  const groupGap = 30;
+  const svgWidth = chartData.length * (groupWidth + groupGap) + 60;
+  const svgHeight = 280;
+  const chartHeight = 200;
+  const bottomPad = 60;
+
+  let bars = '';
+  chartData.forEach((d, i) => {
+    const x = 60 + i * (groupWidth + groupGap);
+    const h1 = maxVal > 0 ? (d.total_simpanan / maxVal) * chartHeight : 0;
+    const h2 = maxVal > 0 ? (d.saldo_pinjaman / maxVal) * chartHeight : 0;
+    const y1 = chartHeight - h1 + 20;
+    const y2 = chartHeight - h2 + 20;
+    bars += `<rect x="${x}" y="${y1}" width="${barWidth}" height="${h1}" fill="#3f51b5" rx="3"/>`;
+    bars += `<rect x="${x + barWidth + 5}" y="${y2}" width="${barWidth}" height="${h2}" fill="#f44336" rx="3"/>`;
+    const label = d.nama.length > 8 ? d.nama.substring(0,8)+'...' : d.nama;
+    bars += `<text x="${x + barWidth}" y="${chartHeight + 40}" text-anchor="middle" font-size="11" fill="#555">${label}</text>`;
+  });
+
+  container.innerHTML = `
+    <svg width="${svgWidth}" height="${svgHeight}" style="overflow:visible">
+      <text x="20" y="130" transform="rotate(-90,20,130)" text-anchor="middle" font-size="12" fill="#666">Jumlah (Rp)</text>
+      ${bars}
+      <line x1="55" y1="20" x2="55" y2="${chartHeight+20}" stroke="#ccc"/>
+      <line x1="55" y1="${chartHeight+20}" x2="${svgWidth}" y2="${chartHeight+20}" stroke="#ccc"/>
+      <rect x="60" y="${chartHeight+50}" width="14" height="14" fill="#3f51b5" rx="2"/>
+      <text x="78" y="${chartHeight+62}" font-size="12" fill="#555">Simpanan</text>
+      <rect x="160" y="${chartHeight+50}" width="14" height="14" fill="#f44336" rx="2"/>
+      <text x="178" y="${chartHeight+62}" font-size="12" fill="#555">Saldo Pinjaman</text>
+    </svg>`;
+}
+</script>
+<% } %>
+
+<%- include('partials/footer') %>

@@ -1,0 +1,129 @@
+<%- include('partials/header', { title: 'Anomali' }) %>
+<%- include('partials/sidebar', { activePage: 'anomali' }) %>
+
+<div class="section-card">
+  <h2 class="section-title">Dashboard Anomali Data</h2>
+  <p class="text-muted">Deteksi otomatis data yang perlu perhatian</p>
+</div>
+
+<!-- Anggota tanpa simpanan pokok -->
+<div class="section-card anomali-section anomali-<%= tanpaPokokAnggota.length > 0 ? 'kritis' : 'ok' %>">
+  <h2 class="section-title">
+    <% if (tanpaPokokAnggota.length > 0) { %>⛔<% } else { %>✅<% } %>
+    Anggota Tanpa Simpanan Pokok
+    <span class="badge badge-<%= tanpaPokokAnggota.length > 0 ? 'danger' : 'success' %>"><%= tanpaPokokAnggota.length %></span>
+  </h2>
+  <% if (tanpaPokokAnggota.length > 0) { %>
+  <div class="table-wrapper">
+    <table class="data-table">
+      <thead><tr><th>Nomor</th><th>Nama</th><th>Tgl Bergabung</th><th>Status</th></tr></thead>
+      <tbody>
+        <% tanpaPokokAnggota.forEach(a => { %>
+        <tr><td><%= a.nomor_anggota %></td><td><%= a.nama %></td><td><%= a.tanggal_bergabung %></td>
+          <td><span class="badge badge-<%= a.status === 'aktif' ? 'success' : 'danger' %>"><%= a.status %></span></td></tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+  <% } else { %>
+  <p class="text-success">Semua anggota memiliki simpanan pokok.</p>
+  <% } %>
+</div>
+
+<!-- Transaksi nilai 0 atau negatif -->
+<div class="section-card anomali-section anomali-<%= transaksiAbnormal.length > 0 ? 'kritis' : 'ok' %>">
+  <h2 class="section-title">
+    <% if (transaksiAbnormal.length > 0) { %>⛔<% } else { %>✅<% } %>
+    Transaksi Nilai Nol atau Negatif
+    <span class="badge badge-<%= transaksiAbnormal.length > 0 ? 'danger' : 'success' %>"><%= transaksiAbnormal.length %></span>
+  </h2>
+  <% if (transaksiAbnormal.length > 0) { %>
+  <div class="table-wrapper">
+    <table class="data-table">
+      <thead><tr><th>Tabel</th><th>Anggota</th><th>Jenis</th><th>Tanggal</th><th class="text-right">Jumlah</th></tr></thead>
+      <tbody>
+        <% transaksiAbnormal.forEach(t => { %>
+        <tr><td><%= t.tabel %></td><td><%= t.nama %></td><td><%= t.jenis %></td><td><%= t.tanggal %></td>
+          <td class="text-right text-danger">Rp <%= t.jumlah.toLocaleString('id-ID') %></td></tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+  <% } else { %>
+  <p class="text-success">Tidak ada transaksi dengan nilai nol atau negatif.</p>
+  <% } %>
+</div>
+
+<!-- Pinjaman tanpa angsuran -->
+<div class="section-card anomali-section anomali-<%= pinjamanTanpaAngsuran.length > 0 ? 'perhatian' : 'ok' %>">
+  <h2 class="section-title">
+    <% if (pinjamanTanpaAngsuran.length > 0) { %>⚠️<% } else { %>✅<% } %>
+    Pinjaman Belum Ada Angsuran (Saldo > 0)
+    <span class="badge badge-<%= pinjamanTanpaAngsuran.length > 0 ? 'warning' : 'success' %>"><%= pinjamanTanpaAngsuran.length %></span>
+  </h2>
+  <% if (pinjamanTanpaAngsuran.length > 0) { %>
+  <div class="table-wrapper">
+    <table class="data-table">
+      <thead><tr><th>Anggota</th><th class="text-right">Saldo Pinjaman</th><th class="text-right">Total Angsuran</th></tr></thead>
+      <tbody>
+        <% pinjamanTanpaAngsuran.forEach(p => { %>
+        <tr><td><%= p.nomor_anggota %> - <%= p.nama %></td>
+          <td class="text-right text-warning">Rp <%= p.saldo.toLocaleString('id-ID') %></td>
+          <td class="text-right">Rp <%= p.total_angsuran.toLocaleString('id-ID') %></td></tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+  <% } else { %>
+  <p class="text-success">Semua peminjam telah melakukan angsuran.</p>
+  <% } %>
+</div>
+
+<!-- Saldo pinjaman negatif -->
+<div class="section-card anomali-section anomali-<%= saldoNegatif.length > 0 ? 'kritis' : 'ok' %>">
+  <h2 class="section-title">
+    <% if (saldoNegatif.length > 0) { %>⛔<% } else { %>✅<% } %>
+    Saldo Pinjaman Negatif
+    <span class="badge badge-<%= saldoNegatif.length > 0 ? 'danger' : 'success' %>"><%= saldoNegatif.length %></span>
+  </h2>
+  <% if (saldoNegatif.length > 0) { %>
+  <div class="table-wrapper">
+    <table class="data-table">
+      <thead><tr><th>Anggota</th><th class="text-right">Saldo</th></tr></thead>
+      <tbody>
+        <% saldoNegatif.forEach(s => { %>
+        <tr><td><%= s.nomor_anggota %> - <%= s.nama %></td>
+          <td class="text-right text-danger">Rp <%= s.saldo.toLocaleString('id-ID') %></td></tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+  <% } else { %>
+  <p class="text-success">Tidak ada saldo pinjaman negatif.</p>
+  <% } %>
+</div>
+
+<!-- Anggota nonaktif dengan transaksi terbaru -->
+<div class="section-card anomali-section anomali-<%= nonaktifDenganTransaksi.length > 0 ? 'perhatian' : 'ok' %>">
+  <h2 class="section-title">
+    <% if (nonaktifDenganTransaksi.length > 0) { %>⚠️<% } else { %>✅<% } %>
+    Anggota Nonaktif dengan Transaksi Terbaru
+    <span class="badge badge-<%= nonaktifDenganTransaksi.length > 0 ? 'warning' : 'success' %>"><%= nonaktifDenganTransaksi.length %></span>
+  </h2>
+  <% if (nonaktifDenganTransaksi.length > 0) { %>
+  <div class="table-wrapper">
+    <table class="data-table">
+      <thead><tr><th>Anggota</th><th>Tabel</th><th>Transaksi Terakhir</th></tr></thead>
+      <tbody>
+        <% nonaktifDenganTransaksi.forEach(n => { %>
+        <tr><td><%= n.nomor_anggota %> - <%= n.nama %></td><td><%= n.tabel %></td><td><%= n.tanggal_terakhir %></td></tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+  <% } else { %>
+  <p class="text-success">Tidak ada anggota nonaktif dengan transaksi baru.</p>
+  <% } %>
+</div>
+
+<%- include('partials/footer') %>
