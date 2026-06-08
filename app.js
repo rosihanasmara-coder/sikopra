@@ -26,7 +26,7 @@ app.use('/tahun-buku', require('./routes/tahunBuku'));
 app.use('/log-perubahan', require('./routes/logPerubahan'));
 app.use('/pengaturan', require('./routes/pengaturan'));
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3005;
 app.listen(PORT, () => {
   console.log(`SiKopra berjalan di http://localhost:${PORT}`);
 });
