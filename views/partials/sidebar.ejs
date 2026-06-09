@@ -40,6 +40,12 @@
     <li><a href="/pengaturan" class="<%= locals.activePage === 'pengaturan' ? 'active' : '' %>">
       <span class="nav-icon">⚙️</span> Pengaturan
     </a></li>
+    <li><a href="/users" class="<%= locals.activePage === 'users' ? 'active' : '' %>">
+      <span class="nav-icon">🔐</span> Manajemen User
+    </a></li>
+    <li><a href="/logout" style="color:#fca5a5">
+      <span class="nav-icon">🚪</span> Keluar
+    </a></li>
   </ul>
 </nav>
 <div class="main-content">
@@ -47,6 +53,9 @@
     <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
     <h1 class="topbar-title"><%= typeof title !== 'undefined' ? title : 'Dashboard' %></h1>
     <div class="topbar-info">
+      <% if (locals.sessionUser) { %>
+        👑 <%= sessionUser.nama %> &bull;
+      <% } %>
       <%= param.nama_koperasi || 'SiKopra' %> &bull; Tahun <%= param.tahun_aktif || new Date().getFullYear() %>
     </div>
   </header>

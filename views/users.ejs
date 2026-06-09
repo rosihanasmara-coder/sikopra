@@ -1,0 +1,144 @@
+<%- include('partials/header', { title: 'Manajemen User' }) %>
+<%- include('partials/sidebar', { activePage: 'users' }) %>
+
+<% if (msg) { %>
+<div class="alert alert-<%= msgType==='success'?'success':'danger' %>"><%= msg %></div>
+<% } %>
+
+<div class="page-actions">
+  <button class="btn btn-primary" onclick="openModal('modalTambah')">+ Tambah User</button>
+</div>
+
+<div class="section-card">
+  <h2 class="section-title">Daftar User</h2>
+  <div class="table-wrapper">
+    <table class="data-table">
+      <thead>
+        <tr><th>Username</th><th>Nama</th><th>Role</th><th>Anggota</th><th>Status</th><th>Aksi</th></tr>
+      </thead>
+      <tbody>
+        <% users.forEach(u => { %>
+        <tr>
+          <td><strong><%= u.username %></strong></td>
+          <td><%= u.nama || '-' %></td>
+          <td>
+            <span class="badge badge-<%= u.role==='admin'?'danger':'primary' %>">
+              <%= u.role==='admin'?'👑 Admin':'👤 Anggota' %>
+            </span>
+          </td>
+          <td><%= u.nomor_anggota || '-' %></td>
+          <td>
+            <span class="badge badge-<%= u.aktif?'success':'danger' %>">
+              <%= u.aktif?'Aktif':'Nonaktif' %>
+            </span>
+          </td>
+          <td>
+            <button class="btn btn-sm btn-warning"
+              data-id="<%= u.id %>"
+              data-nama="<%= u.nama || '' %>"
+              onclick="resetPw(this)">🔑 Reset PW</button>
+            <% if (u.username !== 'admin') { %>
+            <form method="POST" action="/users/toggle-aktif" style="display:inline">
+              <input type="hidden" name="id" value="<%= u.id %>">
+              <button class="btn btn-sm btn-<%= u.aktif?'danger':'success' %>" type="submit">
+                <%= u.aktif?'Nonaktifkan':'Aktifkan' %>
+              </button>
+            </form>
+            <% } %>
+          </td>
+        </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+  <p class="text-muted" style="margin-top:0.75rem;font-size:0.8rem">
+    Password default anggota: <strong>123456</strong> &nbsp;|&nbsp; Password admin: <strong>admin123</strong>
+  </p>
+</div>
+
+<!-- Ganti Password Sendiri -->
+<div class="section-card">
+  <h2 class="section-title">Ganti Password Anda</h2>
+  <form method="POST" action="/users/ganti-password" style="max-width:400px">
+    <div class="form-group">
+      <label>Password Lama</label>
+      <input type="password" name="password_lama" class="form-control" required>
+    </div>
+    <div class="form-group">
+      <label>Password Baru</label>
+      <input type="password" name="password_baru" class="form-control" required minlength="6">
+    </div>
+    <button type="submit" class="btn btn-primary">Simpan Password</button>
+  </form>
+</div>
+
+<!-- Modal Reset Password -->
+<div class="modal-overlay" id="modalResetPw">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Reset Password</h3>
+      <button class="modal-close" onclick="closeModal('modalResetPw')">&times;</button>
+    </div>
+    <form method="POST" action="/users/reset-password">
+      <input type="hidden" name="id" id="resetId">
+      <div class="modal-body">
+        <p style="margin-bottom:1rem;color:#6b7280">Reset password untuk: <strong id="resetNama"></strong></p>
+        <div class="form-group">
+          <label>Password Baru <span class="required">*</span></label>
+          <input type="text" name="password" class="form-control" value="123456" required minlength="6">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('modalResetPw')">Batal</button>
+        <button type="submit" class="btn btn-primary">Reset</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal Tambah User -->
+<div class="modal-overlay" id="modalTambah">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Tambah User</h3>
+      <button class="modal-close" onclick="closeModal('modalTambah')">&times;</button>
+    </div>
+    <form method="POST" action="/users/tambah">
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Username <span class="required">*</span></label>
+          <input type="text" name="username" class="form-control" required>
+        </div>
+        <div class="form-group">
+          <label>Nama</label>
+          <input type="text" name="nama" class="form-control">
+        </div>
+        <div class="form-group">
+          <label>Password <span class="required">*</span></label>
+          <input type="text" name="password" class="form-control" value="123456" required minlength="6">
+        </div>
+        <div class="form-group">
+          <label>Role</label>
+          <select name="role" class="form-control">
+            <option value="admin">Admin</option>
+            <option value="anggota" selected>Anggota</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('modalTambah')">Batal</button>
+        <button type="submit" class="btn btn-primary">Simpan</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function resetPw(btn) {
+  document.getElementById('resetId').value = btn.dataset.id;
+  document.getElementById('resetNama').textContent = btn.dataset.nama || btn.dataset.id;
+  openModal('modalResetPw');
+}
+</script>
+
+<%- include('partials/footer') %>

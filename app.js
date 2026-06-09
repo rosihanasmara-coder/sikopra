@@ -1,6 +1,9 @@
 const express = require('express');
 const path = require('path');
+const session = require('express-session');
 const db = require('./database');
+const { seedUsers } = require('./auth');
+const { requireLogin, requireAdmin } = require('./middleware/auth');
 
 const app = express();
 
@@ -9,9 +12,25 @@ app.set('views', path.join(__dirname, 'views'));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
+app.use(session({
+  secret: 'sikopra-secret-2025',
+  resave: false,
+  saveUninitialized: false,
+  cookie: { maxAge: 8 * 60 * 60 * 1000 } // 8 jam
+}));
 
-// Make db available in routes
+// Make db & user available in all views
 app.locals.db = db;
+app.use((req, res, next) => {
+  res.locals.sessionUser = req.session.user || null;
+  next();
+});
+
+// Seed users after DB ready
+seedUsers(db);
+
+// Auth routes (public)
+app.use('/', require('./routes/auth'));
 
 // Route reset data (sekali pakai untuk migrasi data)
 app.get('/reset-data-koperasi-2025', (req, res) => {
@@ -84,19 +103,21 @@ app.get('/reset-data-koperasi-2025', (req, res) => {
   `);
 });
 
-// Routes
-app.use('/', require('./routes/dashboard'));
-app.use('/anggota', require('./routes/anggota'));
-app.use('/simpanan', require('./routes/simpanan'));
-app.use('/pinjaman', require('./routes/pinjaman'));
-app.use('/shu', require('./routes/shu'));
-app.use('/laporan-anggota', require('./routes/laporan'));
-app.use('/laporan', require('./routes/export'));
-app.use('/rekonsiliasi', require('./routes/rekonsiliasi'));
-app.use('/anomali', require('./routes/anomali'));
-app.use('/tahun-buku', require('./routes/tahunBuku'));
-app.use('/log-perubahan', require('./routes/logPerubahan'));
-app.use('/pengaturan', require('./routes/pengaturan'));
+// Route anggota (login required, admin only)
+app.use('/', requireAdmin, require('./routes/dashboard'));
+app.use('/anggota', requireAdmin, require('./routes/anggota'));
+app.use('/simpanan', requireAdmin, require('./routes/simpanan'));
+app.use('/pinjaman', requireAdmin, require('./routes/pinjaman'));
+app.use('/shu', requireAdmin, require('./routes/shu'));
+app.use('/laporan-anggota', requireAdmin, require('./routes/laporan'));
+app.use('/laporan', requireLogin, require('./routes/export'));
+app.use('/rekonsiliasi', requireAdmin, require('./routes/rekonsiliasi'));
+app.use('/anomali', requireAdmin, require('./routes/anomali'));
+app.use('/tahun-buku', requireAdmin, require('./routes/tahunBuku'));
+app.use('/log-perubahan', requireAdmin, require('./routes/logPerubahan'));
+app.use('/pengaturan', requireAdmin, require('./routes/pengaturan'));
+app.use('/users', require('./routes/users'));
+app.use('/member', require('./routes/member'));
 
 const PORT = process.env.PORT || 3005;
 app.listen(PORT, () => {

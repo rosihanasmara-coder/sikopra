@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Anggota — SiKopra</title>
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    body { background: #f5f6fa; margin: 0; font-family: 'Segoe UI', sans-serif; }
+    .member-header { background: #1a237e; color: #fff; padding: 1rem 1.5rem; display: flex; align-items: center; justify-content: space-between; }
+    .member-header h1 { font-size: 1.1rem; font-weight: 700; margin: 0; }
+    .member-header .right { display: flex; align-items: center; gap: 1rem; font-size: 0.85rem; }
+    .member-header a { color: #fff; text-decoration: none; background: rgba(255,255,255,0.15); padding: 0.3rem 0.8rem; border-radius: 6px; }
+    .member-content { max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
+    .member-welcome { background: linear-gradient(135deg, #1a237e, #3f51b5); color: #fff; border-radius: 14px; padding: 1.5rem 2rem; margin-bottom: 1.5rem; }
+    .member-welcome h2 { margin: 0 0 0.3rem; font-size: 1.3rem; }
+    .member-welcome p { margin: 0; opacity: 0.85; font-size: 0.9rem; }
+    .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px,1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+    .card { background: #fff; border-radius: 12px; padding: 1.25rem; box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
+    .card-label { font-size: 0.78rem; color: #6b7280; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.4rem; }
+    .card-value { font-size: 1.3rem; font-weight: 800; color: #1f2937; }
+    .card-value.green { color: #16a34a; }
+    .card-value.blue { color: #2563eb; }
+    .card-value.orange { color: #d97706; }
+    .card-value.purple { color: #7c3aed; }
+    .section-card { background: #fff; border-radius: 12px; padding: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.07); margin-bottom: 1.5rem; }
+    .section-title { font-size: 1rem; font-weight: 700; color: #1a237e; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid #e5e7eb; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    th, td { padding: 0.6rem 0.75rem; border-bottom: 1px solid #f3f4f6; text-align: left; }
+    th { background: #f9fafb; font-weight: 600; color: #374151; font-size: 0.78rem; }
+    .badge { display:inline-block; padding: 0.2rem 0.6rem; border-radius: 99px; font-size: 0.72rem; font-weight: 600; }
+    .badge-primary { background:#dbeafe; color:#1e40af; }
+    .badge-info { background:#e0f2fe; color:#0369a1; }
+    .badge-success { background:#dcfce7; color:#166534; }
+    .shu-highlight { background: #f0fdf4; border: 2px solid #bbf7d0; border-radius: 12px; padding: 1.25rem 1.5rem; margin-bottom: 1.5rem; }
+    .shu-highlight h3 { color: #166534; font-size: 0.9rem; margin: 0 0 0.75rem; }
+    .shu-row { display: flex; justify-content: space-between; align-items: center; padding: 0.35rem 0; border-bottom: 1px solid #dcfce7; font-size: 0.88rem; }
+    .shu-row:last-child { border-bottom: none; font-weight: 700; font-size: 1rem; color: #166534; }
+    .ganti-pw-btn { background: none; border: 1px solid rgba(255,255,255,0.4); color: #fff; padding: 0.3rem 0.8rem; border-radius: 6px; cursor: pointer; font-size: 0.82rem; }
+    .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:999; align-items:center; justify-content:center; }
+    .modal-overlay.open { display:flex; }
+    .modal { background:#fff; border-radius:12px; padding:1.5rem; width:100%; max-width:380px; }
+    .modal h3 { margin:0 0 1rem; color:#1a237e; }
+    .form-group { margin-bottom:0.85rem; }
+    .form-group label { display:block; font-size:0.82rem; font-weight:600; color:#374151; margin-bottom:0.3rem; }
+    .form-group input { width:100%; padding:0.55rem 0.8rem; border:1.5px solid #d1d5db; border-radius:7px; font-size:0.9rem; box-sizing:border-box; }
+    .btn { padding:0.5rem 1rem; border:none; border-radius:7px; cursor:pointer; font-size:0.88rem; font-weight:600; }
+    .btn-primary { background:#1a237e; color:#fff; }
+    .btn-secondary { background:#e5e7eb; color:#374151; }
+    .alert { padding:0.65rem 1rem; border-radius:8px; margin-bottom:1rem; font-size:0.85rem; }
+    .alert-success { background:#f0fdf4; border:1px solid #bbf7d0; color:#166534; }
+    .alert-error { background:#fef2f2; border:1px solid #fecaca; color:#dc2626; }
+    @media print { .member-header .right, .no-print { display:none; } }
+  </style>
+</head>
+<body>
+
+<div class="member-header">
+  <h1>🏦 SiKopra — Portal Anggota</h1>
+  <div class="right">
+    <span>👤 <%= user.nama %></span>
+    <button class="ganti-pw-btn" onclick="document.getElementById('modalPw').classList.add('open')">🔑 Ganti Password</button>
+    <a href="/logout">Keluar</a>
+  </div>
+</div>
+
+<div class="member-content">
+  <% if (typeof msg !== 'undefined' && msg) { %>
+  <div class="alert alert-<%= typeof msgType !== 'undefined' && msgType === 'success' ? 'success' : 'error' %>"><%= msg %></div>
+  <% } %>
+
+  <div class="member-welcome">
+    <h2>Selamat datang, <%= anggota.nama %> 👋</h2>
+    <p>Nomor Anggota: <strong><%= anggota.nomor_anggota %></strong> &nbsp;|&nbsp; Status: <strong><%= anggota.status.toUpperCase() %></strong> &nbsp;|&nbsp; Bergabung: <%= anggota.tanggal_bergabung %></p>
+  </div>
+
+  <!-- Kartu Ringkasan -->
+  <div class="cards-grid">
+    <div class="card">
+      <div class="card-label">Total Simpanan</div>
+      <div class="card-value green">Rp <%= totalSimpanan.toLocaleString('id-ID') %></div>
+    </div>
+    <div class="card">
+      <div class="card-label">Total Pinjaman</div>
+      <div class="card-value blue">Rp <%= totalPinjaman.toLocaleString('id-ID') %></div>
+    </div>
+    <div class="card">
+      <div class="card-label">Saldo Pinjaman</div>
+      <div class="card-value orange">Rp <%= saldoPinjaman.toLocaleString('id-ID') %></div>
+    </div>
+    <div class="card">
+      <div class="card-label">Hak SHU</div>
+      <div class="card-value purple">Rp <%= totalShu.toLocaleString('id-ID') %></div>
+    </div>
+  </div>
+
+  <!-- Ringkasan SHU -->
+  <div class="shu-highlight no-print">
+    <h3>💰 Ringkasan SHU Anda</h3>
+    <div class="shu-row"><span>Simpanan Pokok</span><span>Rp <%= totalPokok.toLocaleString('id-ID') %></span></div>
+    <div class="shu-row"><span>Simpanan Wajib</span><span>Rp <%= totalWajib.toLocaleString('id-ID') %></span></div>
+    <div class="shu-row"><span>Tabungan</span><span>Rp <%= totalSukarela.toLocaleString('id-ID') %></span></div>
+    <div class="shu-row"><span>Jasa Pinjaman dibayar</span><span>Rp <%= totalJasa.toLocaleString('id-ID') %></span></div>
+    <div class="shu-row"><span>SHU Hak Anggota</span><span>Rp <%= totalShu.toLocaleString('id-ID') %></span></div>
+    <div class="shu-row"><span>SHU + Tabungan</span><span>Rp <%= shuPlusTabungan.toLocaleString('id-ID') %></span></div>
+    <div class="shu-row"><span>Pembulatan (per Rp 500)</span><span>Rp <%= pembulatan.toLocaleString('id-ID') %></span></div>
+  </div>
+
+  <!-- Riwayat Simpanan -->
+  <div class="section-card">
+    <div class="section-title">Riwayat Simpanan</div>
+    <table>
+      <thead><tr><th>Tanggal</th><th>Tahun Buku</th><th>Jenis</th><th style="text-align:right">Jumlah</th><th>Keterangan</th></tr></thead>
+      <tbody>
+        <% simpanan.forEach(s => { %>
+        <tr>
+          <td><%= s.tanggal %></td>
+          <td><%= s.tahun_buku %></td>
+          <td><span class="badge badge-<%= s.jenis==='pokok'?'primary':s.jenis==='wajib'?'info':'success' %>"><%= s.jenis %></span></td>
+          <td style="text-align:right">Rp <%= s.jumlah.toLocaleString('id-ID') %></td>
+          <td><%= s.keterangan||'-' %></td>
+        </tr>
+        <% }) %>
+        <% if (!simpanan.length) { %><tr><td colspan="5" style="text-align:center;color:#9ca3af">Belum ada data</td></tr><% } %>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Riwayat Pinjaman -->
+  <div class="section-card">
+    <div class="section-title">Riwayat Pinjaman & Angsuran</div>
+    <table>
+      <thead><tr><th>Tanggal</th><th>Tahun Buku</th><th>Jenis</th><th style="text-align:right">Jumlah</th><th>Keterangan</th></tr></thead>
+      <tbody>
+        <% pinjaman.forEach(p => { %>
+        <tr>
+          <td><%= p.tanggal %></td>
+          <td><%= p.tahun_buku %></td>
+          <td><span class="badge badge-<%= p.jenis==='pinjaman'?'primary':p.jenis==='angsuran_pokok'?'success':'info' %>"><%= p.jenis.replace('_',' ') %></span></td>
+          <td style="text-align:right">Rp <%= p.jumlah.toLocaleString('id-ID') %></td>
+          <td><%= p.keterangan||'-' %></td>
+        </tr>
+        <% }) %>
+        <% if (!pinjaman.length) { %><tr><td colspan="5" style="text-align:center;color:#9ca3af">Belum ada data</td></tr><% } %>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<!-- Modal Ganti Password -->
+<div class="modal-overlay" id="modalPw">
+  <div class="modal">
+    <h3>🔑 Ganti Password</h3>
+    <form method="POST" action="/users/ganti-password">
+      <div class="form-group">
+        <label>Password Lama</label>
+        <input type="password" name="password_lama" required>
+      </div>
+      <div class="form-group">
+        <label>Password Baru</label>
+        <input type="password" name="password_baru" required minlength="6">
+      </div>
+      <div style="display:flex;gap:0.5rem;justify-content:flex-end;margin-top:1rem">
+        <button type="button" class="btn btn-secondary" onclick="document.getElementById('modalPw').classList.remove('open')">Batal</button>
+        <button type="submit" class="btn btn-primary">Simpan</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+</body>
+</html>
