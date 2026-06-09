@@ -73,11 +73,15 @@
           <td><%= s.keterangan || '-' %></td>
           <td>
             <% if (!locked) { %>
-            <button class="btn btn-sm btn-warning" onclick="editSimpanan(
-              '<%= s.id %>','<%= s.anggota_id %>','<%= s.jenis %>',
-              '<%= s.jumlah %>','<%= s.tanggal %>','<%= s.tahun_buku %>',
-              '<%= (s.keterangan||'').replace(/'/g,&quot;\\'&quot;) %>'
-            )">Edit</button>
+            <button class="btn btn-sm btn-warning"
+              data-id="<%= s.id %>"
+              data-anggota_id="<%= s.anggota_id %>"
+              data-jenis="<%= s.jenis %>"
+              data-jumlah="<%= s.jumlah %>"
+              data-tanggal="<%= s.tanggal %>"
+              data-tahun_buku="<%= s.tahun_buku %>"
+              data-keterangan="<%= s.keterangan || '' %>"
+              onclick="editSimpanan(this)">Edit</button>
             <form method="POST" action="/simpanan/hapus" style="display:inline" onsubmit="return confirm('Hapus simpanan ini?')">
               <input type="hidden" name="id" value="<%= s.id %>">
               <button class="btn btn-sm btn-danger" type="submit">Hapus</button>
@@ -207,14 +211,14 @@
 </div>
 
 <script>
-function editSimpanan(id, anggota_id, jenis, jumlah, tanggal, tahun_buku, keterangan) {
-  document.getElementById('editId').value = id;
-  document.getElementById('editAnggota').value = anggota_id;
-  document.getElementById('editJenis').value = jenis;
-  document.getElementById('editJumlah').value = jumlah;
-  document.getElementById('editTanggal').value = tanggal;
-  document.getElementById('editTahun').value = tahun_buku;
-  document.getElementById('editKeterangan').value = keterangan;
+function editSimpanan(btn) {
+  document.getElementById('editId').value = btn.dataset.id;
+  document.getElementById('editAnggota').value = btn.dataset.anggota_id;
+  document.getElementById('editJenis').value = btn.dataset.jenis;
+  document.getElementById('editJumlah').value = btn.dataset.jumlah;
+  document.getElementById('editTanggal').value = btn.dataset.tanggal;
+  document.getElementById('editTahun').value = btn.dataset.tahun_buku;
+  document.getElementById('editKeterangan').value = btn.dataset.keterangan;
   openModal('modalEdit');
 }
 </script>

@@ -32,12 +32,15 @@
           <td><%= a.tanggal_bergabung %></td>
           <td><span class="badge badge-<%= a.status === 'aktif' ? 'success' : 'danger' %>"><%= a.status %></span></td>
           <td>
-            <button class="btn btn-sm btn-warning" onclick="editAnggota(
-              '<%= a.id %>','<%= a.nama.replace(/'/g,&quot;\\'&quot;) %>',
-              '<%= (a.alamat||'').replace(/'/g,&quot;\\'&quot;) %>',
-              '<%= a.no_hp||'' %>','<%= a.tanggal_bergabung %>',
-              '<%= a.status %>','<%= (a.keterangan||'').replace(/'/g,&quot;\\'&quot;) %>'
-            )">Edit</button>
+            <button class="btn btn-sm btn-warning"
+              data-id="<%= a.id %>"
+              data-nama="<%= a.nama %>"
+              data-alamat="<%= a.alamat || '' %>"
+              data-no_hp="<%= a.no_hp || '' %>"
+              data-tanggal="<%= a.tanggal_bergabung %>"
+              data-status="<%= a.status %>"
+              data-keterangan="<%= a.keterangan || '' %>"
+              onclick="editAnggota(this)">Edit</button>
             <form method="POST" action="/anggota/hapus" style="display:inline" onsubmit="return confirm('Hapus/nonaktifkan anggota ini?')">
               <input type="hidden" name="id" value="<%= a.id %>">
               <button class="btn btn-sm btn-danger" type="submit">Hapus</button>
@@ -145,14 +148,14 @@
 </div>
 
 <script>
-function editAnggota(id, nama, alamat, no_hp, tanggal, status, keterangan) {
-  document.getElementById('editId').value = id;
-  document.getElementById('editNama').value = nama;
-  document.getElementById('editAlamat').value = alamat;
-  document.getElementById('editNoHp').value = no_hp;
-  document.getElementById('editTanggal').value = tanggal;
-  document.getElementById('editStatus').value = status;
-  document.getElementById('editKeterangan').value = keterangan;
+function editAnggota(btn) {
+  document.getElementById('editId').value = btn.dataset.id;
+  document.getElementById('editNama').value = btn.dataset.nama;
+  document.getElementById('editAlamat').value = btn.dataset.alamat;
+  document.getElementById('editNoHp').value = btn.dataset.no_hp;
+  document.getElementById('editTanggal').value = btn.dataset.tanggal;
+  document.getElementById('editStatus').value = btn.dataset.status;
+  document.getElementById('editKeterangan').value = btn.dataset.keterangan;
   openModal('modalEdit');
 }
 </script>
