@@ -10,13 +10,18 @@ router.get('/', (req, res) => {
   const tahunList = db.prepare('SELECT * FROM tahun_buku ORDER BY tahun DESC').all();
 
   let whereClause = '';
+  let whereSimpanan = '';
   const args = [];
-  if (filterTahun) { whereClause = ' AND p.tahun_buku=?'; args.push(filterTahun); }
+  if (filterTahun) {
+    whereClause = ' AND tahun_buku=?';
+    whereSimpanan = ' AND tahun_buku=?';
+    args.push(filterTahun);
+  }
 
   // Ambil komponen SHU dinamis
   const komponenShu = db.prepare('SELECT * FROM shu_komponen WHERE aktif=1 ORDER BY urutan, id').all();
-  const totalShuKoperasi = db.prepare(`SELECT COALESCE(SUM(jumlah),0) as t FROM pinjaman p WHERE jenis='jasa_pinjaman'${whereClause}`).get(...args).t;
-  const totalSimpananSemua = db.prepare('SELECT COALESCE(SUM(jumlah),0) as t FROM simpanan').get().t;
+  const totalShuKoperasi = db.prepare(`SELECT COALESCE(SUM(jumlah),0) as t FROM pinjaman WHERE jenis='jasa_pinjaman'${whereClause}`).get(...args).t;
+  const totalSimpananSemua = db.prepare(`SELECT COALESCE(SUM(jumlah),0) as t FROM simpanan${whereSimpanan ? ' WHERE 1=1'+whereSimpanan : ''}`).get(...args).t;
   const anggotaList = db.prepare('SELECT id, nomor_anggota, nama FROM anggota ORDER BY nomor_anggota').all();
 
   // Hitung nominal per komponen
@@ -33,7 +38,7 @@ router.get('/', (req, res) => {
   // SHU per anggota
   const shuAnggota = anggotaList.map(a => {
     const jasaPinjaman = db.prepare(`SELECT COALESCE(SUM(jumlah),0) as t FROM pinjaman WHERE anggota_id=? AND jenis='jasa_pinjaman'${whereClause}`).get(a.id, ...args).t;
-    const totalSimpanan = db.prepare('SELECT COALESCE(SUM(jumlah),0) as t FROM simpanan WHERE anggota_id=?').get(a.id).t;
+    const totalSimpanan = db.prepare(`SELECT COALESCE(SUM(jumlah),0) as t FROM simpanan WHERE anggota_id=?${whereSimpanan}`).get(a.id, ...args).t;
 
     // SHU dari semua komponen peminjam
     const shuPinjaman = kompPeminjam.reduce((sum, k) => {
