@@ -103,7 +103,11 @@ app.get('/reset-data-koperasi-2025', (req, res) => {
   `);
 });
 
-// Route anggota (login required, admin only)
+// Routes anggota & user (harus SEBELUM requireAdmin catch-all)
+app.use('/member', require('./routes/member'));
+app.use('/users', require('./routes/users'));
+
+// Routes admin only
 app.use('/', requireAdmin, require('./routes/dashboard'));
 app.use('/anggota', requireAdmin, require('./routes/anggota'));
 app.use('/simpanan', requireAdmin, require('./routes/simpanan'));
@@ -116,8 +120,6 @@ app.use('/anomali', requireAdmin, require('./routes/anomali'));
 app.use('/tahun-buku', requireAdmin, require('./routes/tahunBuku'));
 app.use('/log-perubahan', requireAdmin, require('./routes/logPerubahan'));
 app.use('/pengaturan', requireAdmin, require('./routes/pengaturan'));
-app.use('/users', require('./routes/users'));
-app.use('/member', require('./routes/member'));
 
 const PORT = process.env.PORT || 3005;
 app.listen(PORT, () => {
