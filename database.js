@@ -110,60 +110,60 @@ if (getCount('shu_komponen') === 0) {
 
 // Insert default tahun buku
 if (getCount('tahun_buku') === 0) {
-  db.prepare('INSERT INTO tahun_buku (tahun, status) VALUES (?, ?)').run(2024, 'aktif');
-  db.prepare('INSERT INTO tahun_buku (tahun, status) VALUES (?, ?)').run(2025, 'aktif');
+  for (let y = 2017; y <= 2025; y++) {
+    db.prepare('INSERT INTO tahun_buku (tahun, status) VALUES (?, ?)').run(y, y < 2025 ? 'terkunci' : 'aktif');
+  }
 }
 
-// Insert sample anggota
+// Data anggota dari KoperasiRT2025.xlsx
 if (getCount('anggota') === 0) {
-  const ins = db.prepare(`
-    INSERT INTO anggota (nomor_anggota, nama, alamat, no_hp, tanggal_bergabung, status)
-    VALUES (?, ?, ?, ?, ?, 'aktif')
-  `);
-  ins.run('A001', 'Budi Santoso', 'Jl. Mawar No. 1', '081234567890', '2024-01-01');
-  ins.run('A002', 'Siti Rahayu', 'Jl. Melati No. 5', '081234567891', '2024-01-01');
-  ins.run('A003', 'Ahmad Fauzi', 'Jl. Dahlia No. 3', '081234567892', '2024-02-01');
-  ins.run('A004', 'Dewi Lestari', 'Jl. Anggrek No. 7', '081234567893', '2024-02-15');
-  ins.run('A005', 'Eko Prasetyo', 'Jl. Kenanga No. 2', '081234567894', '2024-03-01');
-}
+  const insA = db.prepare(`INSERT INTO anggota (nomor_anggota, nama, alamat, no_hp, tanggal_bergabung, status) VALUES (?, ?, '', '', '2017-01-01', 'aktif')`);
+  const insS = db.prepare(`INSERT INTO simpanan (anggota_id, jenis, jumlah, tanggal, tahun_buku, keterangan) VALUES (?, ?, ?, ?, ?, ?)`);
+  const insP = db.prepare(`INSERT INTO pinjaman  (anggota_id, jenis, jumlah, tanggal, tahun_buku, keterangan) VALUES (?, ?, ?, ?, ?, ?)`);
 
-// Insert sample simpanan
-if (getCount('simpanan') === 0) {
-  const ins = db.prepare(`
-    INSERT INTO simpanan (anggota_id, jenis, jumlah, tanggal, tahun_buku, keterangan)
-    VALUES (?, ?, ?, ?, ?, ?)
-  `);
-  ins.run(1, 'pokok', 100000, '2024-01-01', 2024, 'Simpanan pokok awal');
-  ins.run(2, 'pokok', 100000, '2024-01-01', 2024, 'Simpanan pokok awal');
-  ins.run(3, 'pokok', 100000, '2024-02-01', 2024, 'Simpanan pokok awal');
-  ins.run(4, 'pokok', 100000, '2024-02-15', 2024, 'Simpanan pokok awal');
-  ins.run(5, 'pokok', 100000, '2024-03-01', 2024, 'Simpanan pokok awal');
-  ins.run(1, 'wajib', 50000, '2024-01-05', 2024, 'Simpanan wajib Januari');
-  ins.run(2, 'wajib', 50000, '2024-01-05', 2024, 'Simpanan wajib Januari');
-  ins.run(3, 'wajib', 50000, '2024-02-05', 2024, 'Simpanan wajib Februari');
-  ins.run(1, 'wajib', 50000, '2024-02-05', 2024, 'Simpanan wajib Februari');
-  ins.run(4, 'wajib', 50000, '2024-03-05', 2024, 'Simpanan wajib Maret');
-  ins.run(1, 'sukarela', 200000, '2024-03-10', 2024, 'Simpanan sukarela');
-  ins.run(2, 'sukarela', 150000, '2024-04-15', 2024, 'Simpanan sukarela');
-  ins.run(3, 'sukarela', 300000, '2024-05-20', 2024, 'Simpanan sukarela');
-}
+  const anggota = [
+    { no:'A001', nama:'Bu Sugeng',   pokok:10000, wajib:{2017:24000,2018:12000,2019:12000,2022:12000,2023:12000,2024:12000},        tabungan:2950000 },
+    { no:'A002', nama:'Bu Guswandi', pokok:10000, wajib:{2022:12000,2023:12000,2024:12000},                                          tabungan:113000  },
+    { no:'A003', nama:'Bu Maryono',  pokok:10000, wajib:{2017:24000,2022:12000,2023:12000,2024:12000},                               tabungan:292000  },
+    { no:'A004', nama:'Bu Wawan',    pokok:10000, wajib:{2017:24000,2018:12000,2019:12000,2022:12000,2023:12000,2024:12000},         tabungan:120000,  pinjaman:4000000, jasa:200000, pelunasan:4000000 },
+    { no:'A005', nama:'Bu Puji',     pokok:10000, wajib:{2017:24000,2018:12000,2019:12000,2022:12000,2023:12000,2024:12000},         tabungan:190500,  pinjaman:4050000, jasa:202500, pelunasan:4050000 },
+    { no:'A006', nama:'Bu Ali',      pokok:10000, wajib:{2017:24000,2018:12000,2019:12000,2022:12000,2023:12000,2024:12000},         tabungan:33500   },
+    { no:'A007', nama:'Bu Mala',     pokok:10000, wajib:{2017:24000,2018:12000,2019:12000,2022:12000,2023:12000,2024:12000},         tabungan:75000,   pinjaman:1500000, jasa:75000,  pelunasan:1500000 },
+    { no:'A008', nama:'Bu Nita',     pokok:10000, wajib:{2017:24000,2018:12000,2019:12000,2022:12000,2023:12000,2024:12000},         tabungan:50000,   pinjaman:2000000, jasa:100000, pelunasan:2000000 },
+    { no:'A009', nama:'Bu Tina',     pokok:10000, wajib:{2017:24000,2018:12000,2019:12000,2022:12000,2023:12000,2024:12000},         tabungan:450000  },
+    { no:'A010', nama:'Bu Imam',     pokok:10000, wajib:{},                                                                          tabungan:338000  },
+    { no:'A011', nama:'Bu Hendras',  pokok:10000, wajib:{2017:24000,2018:12000,2019:12000,2022:12000,2023:12000,2024:12000},         tabungan:220000  },
+    { no:'A012', nama:'Bu Yudo',     pokok:10000, wajib:{2017:24000,2018:12000,2019:12000,2022:12000,2023:12000,2024:12000},         tabungan:803000  },
+    { no:'A013', nama:'Bu Uci',      pokok:10000, wajib:{2017:24000,2018:12000,2019:12000,2022:12000,2023:12000,2024:12000},         tabungan:0,       pinjaman:1500000, jasa:75000,  pelunasan:1500000 },
+    { no:'A014', nama:'Bu Rosihan',  pokok:10000, wajib:{2017:24000,2018:12000,2019:12000,2022:12000,2023:12000,2024:12000},         tabungan:2800000 },
+    { no:'A015', nama:'Bu Utami',    pokok:10000, wajib:{},                                                                          tabungan:550000  },
+    { no:'A016', nama:'Bu Priyo',    pokok:10000, wajib:{2017:24000,2018:12000,2019:12000,2022:12000,2023:12000,2024:12000},         tabungan:68000,   pinjaman:1200000, jasa:60000,  pelunasan:1200000 },
+    { no:'A017', nama:'Bu Awan',     pokok:10000, wajib:{2024:12000,2025:12000},                                                     tabungan:0       },
+    { no:'A018', nama:'Bu Arin',     pokok:10000, wajib:{2024:12000,2025:12000},                                                     tabungan:0       },
+    { no:'A019', nama:'Bu Anisa',    pokok:10000, wajib:{2024:12000,2025:12000},                                                     tabungan:27500   },
+    { no:'A020', nama:'Bu Dhana',    pokok:10000, wajib:{2024:12000,2025:12000},                                                     tabungan:0       },
+    { no:'A021', nama:'Bu Arif JL',  pokok:10000, wajib:{},                                                                          tabungan:162500,  pinjaman:750000,  jasa:37500,  pelunasan:750000  },
+    { no:'A023', nama:'Bu Erlike',   pokok:10000, wajib:{2017:24000,2018:12000,2019:12000,2022:12000,2023:12000,2024:12000},         tabungan:500000  },
+  ];
 
-// Insert sample pinjaman
-if (getCount('pinjaman') === 0) {
-  const ins = db.prepare(`
-    INSERT INTO pinjaman (anggota_id, jenis, jumlah, tanggal, tahun_buku, keterangan)
-    VALUES (?, ?, ?, ?, ?, ?)
-  `);
-  ins.run(1, 'pinjaman', 1000000, '2024-02-01', 2024, 'Pinjaman usaha');
-  ins.run(1, 'jasa_pinjaman', 50000, '2024-02-01', 2024, 'Jasa pinjaman 5%');
-  ins.run(2, 'pinjaman', 500000, '2024-03-01', 2024, 'Pinjaman kebutuhan');
-  ins.run(2, 'jasa_pinjaman', 25000, '2024-03-01', 2024, 'Jasa pinjaman 5%');
-  ins.run(4, 'pinjaman', 750000, '2024-04-01', 2024, 'Pinjaman pendidikan');
-  ins.run(4, 'jasa_pinjaman', 37500, '2024-04-01', 2024, 'Jasa pinjaman 5%');
-  ins.run(1, 'angsuran_pokok', 200000, '2024-03-01', 2024, 'Angsuran ke-1');
-  ins.run(1, 'angsuran_pokok', 200000, '2024-04-01', 2024, 'Angsuran ke-2');
-  ins.run(2, 'angsuran_pokok', 250000, '2024-04-01', 2024, 'Angsuran ke-1');
-  ins.run(4, 'angsuran_pokok', 250000, '2024-05-01', 2024, 'Angsuran ke-1');
+  anggota.forEach(a => {
+    const r = insA.run(a.no, a.nama);
+    const aid = r.lastInsertRowid;
+    // Simpanan pokok
+    if (a.pokok > 0) insS.run(aid, 'pokok', a.pokok, '2017-01-01', 2017, 'Simpanan pokok');
+    // Simpanan wajib per tahun
+    Object.entries(a.wajib).forEach(([th, jml]) => {
+      if (jml > 0) insS.run(aid, 'wajib', jml, `${th}-12-31`, parseInt(th), `Simpanan wajib ${th}`);
+    });
+    // Tabungan
+    if (a.tabungan > 0) insS.run(aid, 'sukarela', a.tabungan, '2025-07-31', 2025, 'Total tabungan s/d Juli 2025');
+    // Pinjaman
+    if (a.pinjaman) {
+      insP.run(aid, 'pinjaman',      a.pinjaman,  '2025-01-01', 2025, 'Total pinjaman s/d 2025');
+      insP.run(aid, 'jasa_pinjaman', a.jasa,      '2025-01-01', 2025, 'Total jasa pinjaman s/d 2025');
+      insP.run(aid, 'angsuran_pokok',a.pelunasan, '2025-12-31', 2025, 'Total pelunasan pokok s/d 2025');
+    }
+  });
 }
 
 module.exports = db;
