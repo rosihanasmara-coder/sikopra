@@ -60,7 +60,9 @@ router.get('/dashboard', requireLogin, (req, res) => {
     simpanan, pinjaman,
     totalPokok, totalWajib, totalSukarela, totalSimpanan,
     totalPinjaman, totalAngsuran, totalJasa, saldoPinjaman,
-    totalShu, shuPlusTabungan, pembulatan
+    totalShu, shuPlusTabungan, pembulatan,
+    msg: req.query.msg || '',
+    msgType: req.query.msgType || ''
   });
 });
 
