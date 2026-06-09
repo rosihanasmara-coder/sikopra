@@ -66,7 +66,22 @@ app.get('/reset-data-koperasi-2025', (req, res) => {
     }
   });
 
-  res.send(`<h2>✅ Reset berhasil! 22 anggota telah dimuat.</h2><a href="/anggota">→ Lihat Daftar Anggota</a>`);
+  // Seed tahun buku 2017–2026
+  db.exec('DELETE FROM tahun_buku');
+  db.exec("DELETE FROM sqlite_sequence WHERE name='tahun_buku'");
+  const insTahun = db.prepare('INSERT INTO tahun_buku (tahun, status, keterangan) VALUES (?, ?, ?)');
+  for (let y = 2017; y <= 2025; y++) {
+    insTahun.run(y, y < 2025 ? 'terkunci' : 'aktif', y < 2025 ? 'Tahun buku historis' : 'Tahun buku aktif');
+  }
+  insTahun.run(2026, 'aktif', 'Tahun buku berjalan');
+
+  res.send(`
+    <style>body{font-family:sans-serif;max-width:500px;margin:80px auto;text-align:center}</style>
+    <h2>✅ Reset berhasil!</h2>
+    <p>22 anggota dan tahun buku 2017–2026 telah dimuat.</p>
+    <a href="/anggota" style="display:inline-block;margin:8px;padding:10px 20px;background:#3f51b5;color:#fff;border-radius:6px;text-decoration:none">→ Lihat Anggota</a>
+    <a href="/tahun-buku" style="display:inline-block;margin:8px;padding:10px 20px;background:#4caf50;color:#fff;border-radius:6px;text-decoration:none">→ Lihat Tahun Buku</a>
+  `);
 });
 
 // Routes
