@@ -20,6 +20,15 @@
       </div>
     </div>
   </form>
+  <!-- Tombol Ekspor -->
+  <div style="display:flex;gap:0.6rem;margin-top:0.75rem;flex-wrap:wrap">
+    <a href="/laporan/shu/print<%= filterTahun ? '?tahun='+filterTahun : '' %>" target="_blank"
+      class="btn btn-secondary">🖨 Cetak / PDF</a>
+    <a href="/laporan/shu/xlsx<%= filterTahun ? '?tahun='+filterTahun : '' %>"
+      class="btn" style="background:#217346;color:#fff">📥 Download XLSX</a>
+    <a href="/laporan/shu/docx<%= filterTahun ? '?tahun='+filterTahun : '' %>"
+      class="btn" style="background:#2b579a;color:#fff">📄 Download DOCX</a>
+  </div>
 </div>
 
 <!-- Kartu Ringkasan -->

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Laporan SHU - <%= param.nama_koperasi %></title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: Arial, sans-serif; font-size: 11px; padding: 20px; }
+  .header { text-align: center; margin-bottom: 16px; }
+  .header h2 { font-size: 14px; font-weight: bold; margin-bottom: 4px; }
+  .header h3 { font-size: 12px; font-weight: bold; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+  th, td { border: 1px solid #333; padding: 4px 6px; }
+  th { background: #1a237e; color: white; text-align: center; font-size: 10px; }
+  td { font-size: 10px; }
+  td.center { text-align: center; }
+  td.right { text-align: right; }
+  tr.total td { font-weight: bold; background: #f0f0f0; }
+  .footer { margin-top: 24px; display: flex; justify-content: space-between; }
+  .ttd-box { text-align: center; width: 200px; }
+  .ttd-box .garis { border-bottom: 1px solid #000; margin: 60px 0 4px; }
+  .no-print { margin-bottom: 16px; }
+  @media print {
+    .no-print { display: none; }
+    body { padding: 10px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="no-print">
+  <button onclick="window.print()" style="padding:8px 20px;background:#1a237e;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;margin-right:8px">🖨 Cetak / Simpan PDF</button>
+  <a href="/laporan/shu/xlsx<%= tahun ? '?tahun='+tahun : '' %>" style="padding:8px 20px;background:#217346;color:#fff;border-radius:6px;text-decoration:none;font-size:13px;margin-right:8px">📥 Download XLSX</a>
+  <a href="/laporan/shu/docx<%= tahun ? '?tahun='+tahun : '' %>" style="padding:8px 20px;background:#2b579a;color:#fff;border-radius:6px;text-decoration:none;font-size:13px;margin-right:8px">📄 Download DOCX</a>
+  <a href="/shu" style="padding:8px 20px;background:#6b7280;color:#fff;border-radius:6px;text-decoration:none;font-size:13px">← Kembali</a>
+</div>
+
+<div class="header">
+  <h2><%= param.nama_koperasi || 'Koperasi Warga RT 05' %></h2>
+  <h3>Perhitungan Distribusi SHU<%= tahun ? ' Tahun ' + tahun : '' %></h3>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th rowspan="2">No.</th>
+      <th rowspan="2">Nama Anggota</th>
+      <th rowspan="2">Jasa Pinjaman</th>
+      <th rowspan="2">Jumlah Simpanan<br>(Pokok+Wajib+Tabungan)</th>
+      <th rowspan="2">SHU Atas<br>Jasa Pinjaman</th>
+      <th rowspan="2">SHU Atas<br>Jasa Simpanan</th>
+      <th rowspan="2">SHU di<br>Bagikan</th>
+      <th rowspan="2">SHU +<br>Tabungan</th>
+      <th rowspan="2">Pembu-<br>latan</th>
+      <th rowspan="2">TTD</th>
+    </tr>
+    <tr></tr>
+  </thead>
+  <tbody>
+    <% rows.forEach((r, i) => { %>
+    <tr>
+      <td class="center"><%= r.no %></td>
+      <td><%= r.nama %></td>
+      <td class="right"><%= r.jasa_pinjaman > 0 ? r.jasa_pinjaman.toLocaleString('id-ID') : '-' %></td>
+      <td class="right"><%= r.jumlah_simpanan.toLocaleString('id-ID') %></td>
+      <td class="right"><%= r.shu_pinjaman > 0 ? r.shu_pinjaman.toLocaleString('id-ID') : '-' %></td>
+      <td class="right"><%= r.shu_simpanan.toLocaleString('id-ID') %></td>
+      <td class="right"><%= r.shu_dibagi.toLocaleString('id-ID') %></td>
+      <td class="right"><%= r.shu_plus_tabungan.toLocaleString('id-ID') %></td>
+      <td class="right"><%= r.pembulatan.toLocaleString('id-ID') %></td>
+      <td class="center"><%= r.no %></td>
+    </tr>
+    <% }) %>
+  </tbody>
+  <tfoot>
+    <tr class="total">
+      <td colspan="2" class="center">TOTAL</td>
+      <td class="right"><%= total.jasa_pinjaman.toLocaleString('id-ID') %></td>
+      <td class="right"><%= total.jumlah_simpanan.toLocaleString('id-ID') %></td>
+      <td class="right"><%= total.shu_pinjaman.toLocaleString('id-ID') %></td>
+      <td class="right"><%= total.shu_simpanan.toLocaleString('id-ID') %></td>
+      <td class="right"><%= total.shu_dibagi.toLocaleString('id-ID') %></td>
+      <td class="right"><%= total.shu_plus_tabungan.toLocaleString('id-ID') %></td>
+      <td class="right"><%= total.pembulatan.toLocaleString('id-ID') %></td>
+      <td></td>
+    </tr>
+  </tfoot>
+</table>
+
+<div class="footer">
+  <div class="ttd-box">
+    <p>Mengetahui,</p>
+    <p>Ketua Koperasi</p>
+    <div class="garis"></div>
+    <p>(_____________________)</p>
+  </div>
+  <div class="ttd-box">
+    <p>Bendahara</p>
+    <br>
+    <div class="garis"></div>
+    <p>(_____________________)</p>
+  </div>
+  <div style="text-align:right;font-size:10px;color:#666;align-self:flex-end">
+    Dicetak: <%= new Date().toLocaleDateString('id-ID', {day:'2-digit',month:'long',year:'numeric'}) %>
+  </div>
+</div>
+
+</body>
+</html>

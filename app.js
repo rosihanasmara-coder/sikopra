@@ -91,6 +91,7 @@ app.use('/simpanan', require('./routes/simpanan'));
 app.use('/pinjaman', require('./routes/pinjaman'));
 app.use('/shu', require('./routes/shu'));
 app.use('/laporan-anggota', require('./routes/laporan'));
+app.use('/laporan', require('./routes/export'));
 app.use('/rekonsiliasi', require('./routes/rekonsiliasi'));
 app.use('/anomali', require('./routes/anomali'));
 app.use('/tahun-buku', require('./routes/tahunBuku'));
