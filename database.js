@@ -100,6 +100,16 @@ if (getCount('parameter') === 0) {
   ins.run('tahun_aktif', currentYear, 'Tahun buku aktif');
 }
 
+// Auto-reset: hapus data contoh lama jika masih ada (Budi Santoso / Siti Rahayu)
+const dataLama = db.prepare("SELECT id FROM anggota WHERE nama IN ('Budi Santoso','Siti Rahayu') LIMIT 1").get();
+if (dataLama) {
+  db.exec('DELETE FROM log_perubahan');
+  db.exec('DELETE FROM pinjaman');
+  db.exec('DELETE FROM simpanan');
+  db.exec('DELETE FROM anggota');
+  db.exec("DELETE FROM sqlite_sequence WHERE name IN ('anggota','simpanan','pinjaman','log_perubahan')");
+}
+
 // Insert default komponen SHU
 if (getCount('shu_komponen') === 0) {
   const ins = db.prepare(`INSERT INTO shu_komponen (nama, kode, persentase, deskripsi, tipe, urutan) VALUES (?,?,?,?,?,?)`);
