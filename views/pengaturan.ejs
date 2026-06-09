@@ -1,6 +1,11 @@
 <%- include('partials/header', { title: 'Pengaturan' }) %>
 <%- include('partials/sidebar', { activePage: 'pengaturan' }) %>
 
+<% if (msg) { %>
+<div class="alert alert-<%= msgType === 'success' ? 'success' : 'danger' %>"><%= msg %></div>
+<% } %>
+
+<!-- Pengaturan Umum -->
 <div class="section-card">
   <h2 class="section-title">Pengaturan Sistem</h2>
   <form method="POST" action="/pengaturan/simpan">
@@ -13,21 +18,6 @@
       <input type="number" name="tahun_aktif" class="form-control" value="<%= param.tahun_aktif || new Date().getFullYear() %>" min="2000" max="2099" required>
     </div>
     <div class="form-group">
-      <label>Persentase Cadangan (%)</label>
-      <input type="number" name="persen_cadangan" class="form-control" value="<%= param.persen_cadangan || 2 %>" min="0" max="100" step="0.1" required>
-      <small class="form-hint">Persentase dari SHU koperasi yang dialokasikan sebagai cadangan</small>
-    </div>
-    <div class="form-group">
-      <label>Persentase SHU Peminjam (%)</label>
-      <input type="number" name="persen_shu_peminjam" class="form-control" value="<%= param.persen_shu_peminjam || 59 %>" min="0" max="100" step="0.1" required>
-      <small class="form-hint">Persentase SHU yang dibagi berdasarkan jasa pinjaman anggota</small>
-    </div>
-    <div class="form-group">
-      <label>Persentase SHU Simpanan (%)</label>
-      <input type="number" name="persen_shu_simpanan" class="form-control" value="<%= param.persen_shu_simpanan || 39 %>" min="0" max="100" step="0.1" required>
-      <small class="form-hint">Persentase SHU yang dibagi berdasarkan jumlah simpanan anggota</small>
-    </div>
-    <div class="form-group">
       <label>Jasa Pinjaman Default (%)</label>
       <input type="number" name="jasa_pinjaman_default" class="form-control" value="<%= param.jasa_pinjaman_default || 5 %>" min="0" max="100" step="0.1" required>
       <small class="form-hint">Persentase jasa pinjaman yang digunakan saat membuat pinjaman baru</small>
@@ -38,14 +28,300 @@
   </form>
 </div>
 
+<!-- Pembagian Persentase SHU -->
+<div class="section-card">
+  <h2 class="section-title">Pembagian Persentase SHU</h2>
+  <p class="text-muted" style="margin-bottom:1.5rem">Atur alokasi pembagian SHU koperasi. Total seluruh komponen harus sama dengan <strong>100%</strong>.</p>
+
+  <!-- Visualisasi Bar -->
+  <div class="shu-bar-container" id="shuBar">
+    <div class="shu-bar-segment shu-cadangan" id="barCadangan" style="width:<%= param.persen_cadangan || 2 %>%">
+      <span><%= param.persen_cadangan || 2 %>%</span>
+    </div>
+    <div class="shu-bar-segment shu-peminjam" id="barPeminjam" style="width:<%= param.persen_shu_peminjam || 59 %>%">
+      <span><%= param.persen_shu_peminjam || 59 %>%</span>
+    </div>
+    <div class="shu-bar-segment shu-simpanan" id="barSimpanan" style="width:<%= param.persen_shu_simpanan || 39 %>%">
+      <span><%= param.persen_shu_simpanan || 39 %>%</span>
+    </div>
+  </div>
+
+  <div class="shu-legend">
+    <span class="legend-item"><span class="legend-dot shu-cadangan"></span> Cadangan</span>
+    <span class="legend-item"><span class="legend-dot shu-peminjam"></span> SHU Peminjam</span>
+    <span class="legend-item"><span class="legend-dot shu-simpanan"></span> SHU Simpanan</span>
+  </div>
+
+  <!-- Status total -->
+  <div class="shu-total-status" id="totalStatus">
+    <span id="totalLabel">Total: <strong id="totalNilai"><%= (parseFloat(param.persen_cadangan||2) + parseFloat(param.persen_shu_peminjam||59) + parseFloat(param.persen_shu_simpanan||39)).toFixed(1) %>%</strong></span>
+    <span id="totalBadge" class="badge <%= (parseFloat(param.persen_cadangan||2) + parseFloat(param.persen_shu_peminjam||59) + parseFloat(param.persen_shu_simpanan||39)) === 100 ? 'badge-success' : 'badge-danger' %>">
+      <%= (parseFloat(param.persen_cadangan||2) + parseFloat(param.persen_shu_peminjam||59) + parseFloat(param.persen_shu_simpanan||39)) === 100 ? '✓ Sesuai (100%)' : '✗ Belum 100%' %>
+    </span>
+  </div>
+
+  <form method="POST" action="/pengaturan/simpan-shu" id="formShu">
+    <div class="shu-grid">
+      <div class="shu-item">
+        <div class="shu-item-header shu-cadangan-bg">
+          <span class="shu-item-icon">🏦</span>
+          <span class="shu-item-label">Cadangan / KAS</span>
+        </div>
+        <div class="shu-item-body">
+          <div class="shu-input-group">
+            <input type="number" name="persen_cadangan" id="inputCadangan"
+              class="form-control shu-input"
+              value="<%= param.persen_cadangan || 2 %>"
+              min="0" max="100" step="0.1" required
+              onchange="updateShuBar()">
+            <span class="shu-unit">%</span>
+          </div>
+          <small class="form-hint">Dana cadangan/KAS koperasi</small>
+        </div>
+      </div>
+
+      <div class="shu-item">
+        <div class="shu-item-header shu-peminjam-bg">
+          <span class="shu-item-icon">💳</span>
+          <span class="shu-item-label">SHU Anggota Peminjam</span>
+        </div>
+        <div class="shu-item-body">
+          <div class="shu-input-group">
+            <input type="number" name="persen_shu_peminjam" id="inputPeminjam"
+              class="form-control shu-input"
+              value="<%= param.persen_shu_peminjam || 59 %>"
+              min="0" max="100" step="0.1" required
+              onchange="updateShuBar()">
+            <span class="shu-unit">%</span>
+          </div>
+          <small class="form-hint">Dibagi proporsional atas jasa pinjaman anggota</small>
+        </div>
+      </div>
+
+      <div class="shu-item">
+        <div class="shu-item-header shu-simpanan-bg">
+          <span class="shu-item-icon">💰</span>
+          <span class="shu-item-label">SHU Anggota Simpanan</span>
+        </div>
+        <div class="shu-item-body">
+          <div class="shu-input-group">
+            <input type="number" name="persen_shu_simpanan" id="inputSimpanan"
+              class="form-control shu-input"
+              value="<%= param.persen_shu_simpanan || 39 %>"
+              min="0" max="100" step="0.1" required
+              onchange="updateShuBar()">
+            <span class="shu-unit">%</span>
+          </div>
+          <small class="form-hint">Dibagi proporsional atas simpanan anggota</small>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-actions" style="margin-top:1.5rem">
+      <button type="submit" class="btn btn-primary" id="btnSimpanShu">💾 Simpan Pembagian SHU</button>
+      <button type="button" class="btn btn-secondary" onclick="resetShu()">↺ Reset ke Default</button>
+    </div>
+  </form>
+
+  <!-- Tabel Ringkasan -->
+  <div style="margin-top:2rem">
+    <h3 style="font-size:1rem;font-weight:600;color:#374151;margin-bottom:1rem">Ringkasan Rumus Perhitungan</h3>
+    <table class="detail-table">
+      <tr>
+        <th>Komponen</th>
+        <th>Persentase</th>
+        <th>Rumus</th>
+      </tr>
+      <tr>
+        <td>🏦 Cadangan / KAS</td>
+        <td><strong id="sumCadangan"><%= param.persen_cadangan || 2 %>%</strong></td>
+        <td>= <%= param.persen_cadangan || 2 %>% × Total Jasa Pinjaman</td>
+      </tr>
+      <tr>
+        <td>💳 SHU Peminjam</td>
+        <td><strong id="sumPeminjam"><%= param.persen_shu_peminjam || 59 %>%</strong></td>
+        <td>= <%= param.persen_shu_peminjam || 59 %>% × Total Jasa Pinjaman, dibagi proporsional</td>
+      </tr>
+      <tr>
+        <td>💰 SHU Simpanan</td>
+        <td><strong id="sumSimpanan"><%= param.persen_shu_simpanan || 39 %>%</strong></td>
+        <td>= <%= param.persen_shu_simpanan || 39 %>% × Total Jasa Pinjaman, dibagi proporsional</td>
+      </tr>
+      <tr style="background:#f0fdf4;font-weight:700">
+        <td>Total</td>
+        <td id="sumTotal"><%= (parseFloat(param.persen_cadangan||2) + parseFloat(param.persen_shu_peminjam||59) + parseFloat(param.persen_shu_simpanan||39)).toFixed(1) %>%</td>
+        <td>Harus = 100%</td>
+      </tr>
+    </table>
+  </div>
+</div>
+
+<!-- Informasi Sistem -->
 <div class="section-card">
   <h2 class="section-title">Informasi Sistem</h2>
   <table class="detail-table">
     <tr><th>Versi Aplikasi</th><td>1.0.0</td></tr>
-    <tr><th>Database</th><td>SQLite (better-sqlite3)</td></tr>
+    <tr><th>Database</th><td>SQLite (node:sqlite)</td></tr>
     <tr><th>Framework</th><td>Node.js + Express.js</td></tr>
     <tr><th>Template Engine</th><td>EJS</td></tr>
   </table>
 </div>
+
+<style>
+.shu-bar-container {
+  display: flex;
+  height: 48px;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 0.75rem;
+  border: 1px solid #e5e7eb;
+}
+.shu-bar-segment {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #fff;
+  transition: width 0.4s ease;
+  min-width: 2%;
+  overflow: hidden;
+}
+.shu-cadangan { background: #f59e0b; }
+.shu-peminjam { background: #3b82f6; }
+.shu-simpanan { background: #10b981; }
+.shu-cadangan-bg { background: #fef3c7; color: #92400e; }
+.shu-peminjam-bg { background: #dbeafe; color: #1e40af; }
+.shu-simpanan-bg { background: #d1fae5; color: #065f46; }
+
+.shu-legend {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+.legend-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  display: inline-block;
+}
+
+.shu-total-status {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  background: #f9fafb;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  border: 1px solid #e5e7eb;
+  font-size: 0.95rem;
+}
+
+.shu-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+@media (max-width: 768px) {
+  .shu-grid { grid-template-columns: 1fr; }
+}
+
+.shu-item {
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  overflow: hidden;
+}
+.shu-item-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+.shu-item-icon { font-size: 1.2rem; }
+.shu-item-body { padding: 1rem; }
+
+.shu-input-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+}
+.shu-input {
+  font-size: 1.4rem !important;
+  font-weight: 700 !important;
+  text-align: center;
+  color: #1f2937 !important;
+}
+.shu-unit {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #6b7280;
+}
+</style>
+
+<script>
+function updateShuBar() {
+  const c = parseFloat(document.getElementById('inputCadangan').value) || 0;
+  const p = parseFloat(document.getElementById('inputPeminjam').value) || 0;
+  const s = parseFloat(document.getElementById('inputSimpanan').value) || 0;
+  const total = c + p + s;
+
+  document.getElementById('barCadangan').style.width = c + '%';
+  document.getElementById('barCadangan').querySelector('span').textContent = c + '%';
+  document.getElementById('barPeminjam').style.width = p + '%';
+  document.getElementById('barPeminjam').querySelector('span').textContent = p + '%';
+  document.getElementById('barSimpanan').style.width = s + '%';
+  document.getElementById('barSimpanan').querySelector('span').textContent = s + '%';
+
+  document.getElementById('totalNilai').textContent = total.toFixed(1) + '%';
+  document.getElementById('sumCadangan').textContent = c + '%';
+  document.getElementById('sumPeminjam').textContent = p + '%';
+  document.getElementById('sumSimpanan').textContent = s + '%';
+  document.getElementById('sumTotal').textContent = total.toFixed(1) + '%';
+
+  const badge = document.getElementById('totalBadge');
+  if (Math.abs(total - 100) < 0.01) {
+    badge.textContent = '✓ Sesuai (100%)';
+    badge.className = 'badge badge-success';
+    document.getElementById('btnSimpanShu').disabled = false;
+  } else {
+    badge.textContent = '✗ Belum 100% (sisa ' + (100 - total).toFixed(1) + '%)';
+    badge.className = 'badge badge-danger';
+    document.getElementById('btnSimpanShu').disabled = true;
+  }
+}
+
+function resetShu() {
+  document.getElementById('inputCadangan').value = 2;
+  document.getElementById('inputPeminjam').value = 59;
+  document.getElementById('inputSimpanan').value = 39;
+  updateShuBar();
+}
+
+document.getElementById('formShu').addEventListener('submit', function(e) {
+  const c = parseFloat(document.getElementById('inputCadangan').value) || 0;
+  const p = parseFloat(document.getElementById('inputPeminjam').value) || 0;
+  const s = parseFloat(document.getElementById('inputSimpanan').value) || 0;
+  const total = c + p + s;
+  if (Math.abs(total - 100) >= 0.01) {
+    e.preventDefault();
+    alert('Total persentase harus 100%. Saat ini: ' + total.toFixed(1) + '%');
+  }
+});
+
+// Init
+updateShuBar();
+</script>
 
 <%- include('partials/footer') %>
