@@ -11,8 +11,16 @@ router.get('/dashboard', requireLogin, (req, res) => {
   const param = {};
   db.prepare('SELECT kunci, nilai FROM parameter').all().forEach(p => param[p.kunci] = p.nilai);
 
+  if (!anggota_id) {
+    req.session.destroy();
+    return res.render('login', { error: 'Akun ini tidak terhubung ke data anggota. Hubungi admin.', msg: '' });
+  }
+
   const anggota = db.prepare('SELECT * FROM anggota WHERE id=?').get(anggota_id);
-  if (!anggota) return res.redirect('/login?error=Data anggota tidak ditemukan');
+  if (!anggota) {
+    req.session.destroy();
+    return res.render('login', { error: 'Data anggota tidak ditemukan. Hubungi admin.', msg: '' });
+  }
 
   const simpanan = db.prepare(`SELECT * FROM simpanan WHERE anggota_id=? ORDER BY tanggal DESC`).all(anggota_id);
   const pinjaman = db.prepare(`SELECT * FROM pinjaman WHERE anggota_id=? ORDER BY tanggal DESC`).all(anggota_id);
