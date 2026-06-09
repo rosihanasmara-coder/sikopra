@@ -22,24 +22,24 @@
   </form>
 </div>
 
-<!-- SHU Summary -->
+<!-- Kartu Ringkasan -->
 <div class="cards-grid">
   <div class="card card-primary">
     <div class="card-body">
-      <div class="card-label">Total Jasa Pinjaman (SHU Koperasi)</div>
+      <div class="card-label">Total Jasa Pinjaman (Basis SHU)</div>
       <div class="card-value">Rp <%= shuKoperasi.toLocaleString('id-ID') %></div>
     </div>
   </div>
   <div class="card card-warning">
     <div class="card-body">
-      <div class="card-label">Cadangan (<%= persen.cadangan %>%)</div>
-      <div class="card-value">Rp <%= cadangan.toLocaleString('id-ID') %></div>
+      <div class="card-label">Total Cadangan / KAS</div>
+      <div class="card-value">Rp <%= Math.round(cadangan).toLocaleString('id-ID') %></div>
     </div>
   </div>
   <div class="card card-success">
     <div class="card-body">
-      <div class="card-label">SHU Dibagi Anggota (98%)</div>
-      <div class="card-value">Rp <%= shuDibagi.toLocaleString('id-ID') %></div>
+      <div class="card-label">Total SHU Dibagi ke Anggota</div>
+      <div class="card-value">Rp <%= Math.round(shuDibagi).toLocaleString('id-ID') %></div>
     </div>
   </div>
   <div class="card card-info">
@@ -50,18 +50,26 @@
   </div>
 </div>
 
-<div class="cards-grid">
-  <div class="card">
-    <div class="card-body">
-      <div class="card-label">Porsi Peminjam (<%= persen.peminjam %>%) dari SHU Dibagi</div>
-      <div class="card-value text-primary">Rp <%= porsiPeminjam.toLocaleString('id-ID') %></div>
+<!-- Rincian Komponen SHU -->
+<div class="section-card">
+  <h2 class="section-title">Rincian Komponen SHU Koperasi</h2>
+  <div class="cards-grid" style="grid-template-columns:repeat(auto-fill,minmax(220px,1fr))">
+    <% const barColors = ['#f59e0b','#3b82f6','#10b981','#8b5cf6','#ef4444','#06b6d4','#f97316','#84cc16']; %>
+    <% komponenHasil.forEach((k, i) => { %>
+    <div class="card" style="border-top:4px solid <%= barColors[i % barColors.length] %>">
+      <div class="card-body">
+        <div class="card-label"><%= k.nama %> (<%= k.persentase %>%)</div>
+        <div class="card-value" style="color:<%= barColors[i % barColors.length] %>">
+          Rp <%= Math.round(k.nominal).toLocaleString('id-ID') %>
+        </div>
+        <div style="margin-top:0.3rem">
+          <span class="badge badge-<%= k.tipe==='cadangan'?'warning':k.tipe==='anggota_peminjam'?'primary':k.tipe==='anggota_simpanan'?'success':'info' %>" style="font-size:0.72rem">
+            <%= k.tipe==='cadangan'?'Cadangan':k.tipe==='anggota_peminjam'?'SHU Peminjam':k.tipe==='anggota_simpanan'?'SHU Simpanan':'Umum' %>
+          </span>
+        </div>
+      </div>
     </div>
-  </div>
-  <div class="card">
-    <div class="card-body">
-      <div class="card-label">Porsi Simpanan (<%= persen.simpanan %>%) dari SHU Dibagi</div>
-      <div class="card-value text-success">Rp <%= porsiSimpanan.toLocaleString('id-ID') %></div>
-    </div>
+    <% }) %>
   </div>
 </div>
 
@@ -72,43 +80,61 @@
     <table class="data-table">
       <thead>
         <tr>
+          <th>No</th>
           <th>Anggota</th>
           <th class="text-right">Jasa Pinjaman</th>
           <th class="text-right">Total Simpanan</th>
-          <th class="text-right">SHU dari Pinjaman</th>
-          <th class="text-right">SHU dari Simpanan</th>
+          <% kompPeminjam.forEach(k => { %>
+          <th class="text-right"><%= k.nama %></th>
+          <% }) %>
+          <% kompSimpanan.forEach(k => { %>
+          <th class="text-right"><%= k.nama %></th>
+          <% }) %>
           <th class="text-right">Total SHU</th>
         </tr>
       </thead>
       <tbody>
         <% let grandTotal = 0; %>
-        <% shuAnggota.forEach(s => { %>
+        <% shuAnggota.forEach((s, i) => { %>
         <% grandTotal += s.total_shu; %>
         <tr>
+          <td><%= i+1 %></td>
           <td><%= s.nomor_anggota %> - <%= s.nama %></td>
           <td class="text-right">Rp <%= s.jasa_pinjaman.toLocaleString('id-ID') %></td>
           <td class="text-right">Rp <%= s.total_simpanan.toLocaleString('id-ID') %></td>
-          <td class="text-right">Rp <%= Math.round(s.shu_pinjaman).toLocaleString('id-ID') %></td>
-          <td class="text-right">Rp <%= Math.round(s.shu_simpanan).toLocaleString('id-ID') %></td>
+          <% kompPeminjam.forEach(() => { %>
+          <td class="text-right">Rp <%= Math.round(s.shu_pinjaman / (kompPeminjam.length||1)).toLocaleString('id-ID') %></td>
+          <% }) %>
+          <% kompSimpanan.forEach(() => { %>
+          <td class="text-right">Rp <%= Math.round(s.shu_simpanan / (kompSimpanan.length||1)).toLocaleString('id-ID') %></td>
+          <% }) %>
           <td class="text-right"><strong>Rp <%= Math.round(s.total_shu).toLocaleString('id-ID') %></strong></td>
         </tr>
         <% }) %>
         <% if (shuAnggota.length === 0) { %>
-        <tr><td colspan="6" class="text-center text-muted">Belum ada data</td></tr>
+        <tr><td colspan="10" class="text-center text-muted">Belum ada data</td></tr>
         <% } %>
       </tbody>
       <tfoot>
         <tr class="table-total">
-          <td colspan="3"><strong>Total SHU Dibagi</strong></td>
-          <td colspan="3" class="text-right"><strong>Rp <%= Math.round(grandTotal).toLocaleString('id-ID') %></strong></td>
+          <td colspan="4"><strong>Total SHU Dibagi ke Anggota</strong></td>
+          <td colspan="<%= kompPeminjam.length + kompSimpanan.length + 1 %>" class="text-right">
+            <strong>Rp <%= Math.round(grandTotal).toLocaleString('id-ID') %></strong>
+          </td>
         </tr>
       </tfoot>
     </table>
   </div>
-  <p class="text-muted" style="margin-top:8px;font-size:13px;">
-    * SHU dari pinjaman = (Jasa pinjaman anggota / Total jasa pinjaman) × <%= persen.peminjam %>% × SHU Koperasi<br>
-    * SHU dari simpanan = (Total simpanan anggota / Total simpanan semua) × <%= persen.simpanan %>% × SHU Koperasi
-  </p>
+
+  <div class="text-muted" style="margin-top:0.75rem;font-size:0.8rem;line-height:1.6">
+    <% kompPeminjam.forEach(k => { %>
+    * <strong><%= k.nama %></strong>: (Jasa pinjaman anggota ÷ Total jasa pinjaman) × <%= k.persentase %>% × SHU Koperasi<br>
+    <% }) %>
+    <% kompSimpanan.forEach(k => { %>
+    * <strong><%= k.nama %></strong>: (Simpanan anggota ÷ Total simpanan semua) × <%= k.persentase %>% × SHU Koperasi<br>
+    <% }) %>
+    <a href="/pengaturan" class="text-primary" style="font-size:0.82rem">⚙ Ubah komponen SHU di Pengaturan</a>
+  </div>
 </div>
 
 <%- include('partials/footer') %>

@@ -11,49 +11,65 @@ router.get('/', (req, res) => {
 
   let whereClause = '';
   const args = [];
-  if (filterTahun) {
-    whereClause = ' AND p.tahun_buku=?';
-    args.push(filterTahun);
-  }
+  if (filterTahun) { whereClause = ' AND p.tahun_buku=?'; args.push(filterTahun); }
 
-  const persen = {
-    cadangan: parseFloat(param.persen_cadangan || 2),
-    peminjam: parseFloat(param.persen_shu_peminjam || 59),
-    simpanan: parseFloat(param.persen_shu_simpanan || 39)
-  };
+  // Ambil komponen SHU dinamis
+  const komponenShu = db.prepare('SELECT * FROM shu_komponen WHERE aktif=1 ORDER BY urutan, id').all();
+  const totalShuKoperasi = db.prepare(`SELECT COALESCE(SUM(jumlah),0) as t FROM pinjaman p WHERE jenis='jasa_pinjaman'${whereClause}`).get(...args).t;
+  const totalSimpananSemua = db.prepare('SELECT COALESCE(SUM(jumlah),0) as t FROM simpanan').get().t;
+  const anggotaList = db.prepare('SELECT id, nomor_anggota, nama FROM anggota ORDER BY nomor_anggota').all();
 
-  const shuKoperasi = db.prepare(`SELECT COALESCE(SUM(jumlah),0) as t FROM pinjaman p WHERE jenis='jasa_pinjaman'${whereClause}`).get(...args).t;
-  const cadangan = shuKoperasi * (persen.cadangan / 100);
-  const shuDibagi = shuKoperasi - cadangan;
-  const porsiPeminjam = shuDibagi * (persen.peminjam / (persen.peminjam + persen.simpanan));
-  const porsiSimpanan = shuDibagi * (persen.simpanan / (persen.peminjam + persen.simpanan));
+  // Hitung nominal per komponen
+  const komponenHasil = komponenShu.map(k => ({
+    ...k,
+    nominal: totalShuKoperasi * (k.persentase / 100)
+  }));
 
-  const totalJasaSemua = shuKoperasi;
-  const totalSimpananSemua = db.prepare(`SELECT COALESCE(SUM(jumlah),0) as t FROM simpanan`).get().t;
+  // Komponen khusus anggota (peminjam dan simpanan) untuk distribusi
+  const kompPeminjam = komponenShu.filter(k => k.tipe === 'anggota_peminjam');
+  const kompSimpanan = komponenShu.filter(k => k.tipe === 'anggota_simpanan');
+  const totalPorsiBagi = kompPeminjam.reduce((s,k)=>s+k.persentase,0) + kompSimpanan.reduce((s,k)=>s+k.persentase,0);
 
-  const anggota = db.prepare('SELECT id, nomor_anggota, nama FROM anggota ORDER BY nomor_anggota').all();
-  const shuAnggota = anggota.map(a => {
+  // SHU per anggota
+  const shuAnggota = anggotaList.map(a => {
     const jasaPinjaman = db.prepare(`SELECT COALESCE(SUM(jumlah),0) as t FROM pinjaman WHERE anggota_id=? AND jenis='jasa_pinjaman'${whereClause}`).get(a.id, ...args).t;
-    const totalSimpanan = db.prepare(`SELECT COALESCE(SUM(jumlah),0) as t FROM simpanan WHERE anggota_id=?`).get(a.id).t;
+    const totalSimpanan = db.prepare('SELECT COALESCE(SUM(jumlah),0) as t FROM simpanan WHERE anggota_id=?').get(a.id).t;
 
-    const shuPinjaman = totalJasaSemua > 0 ? (jasaPinjaman / totalJasaSemua) * porsiPeminjam : 0;
-    const shuSimpananVal = totalSimpananSemua > 0 ? (totalSimpanan / totalSimpananSemua) * porsiSimpanan : 0;
-    const totalShu = shuPinjaman + shuSimpananVal;
+    // SHU dari semua komponen peminjam
+    const shuPinjaman = kompPeminjam.reduce((sum, k) => {
+      const nominal = totalShuKoperasi * (k.persentase / 100);
+      return sum + (totalShuKoperasi > 0 ? (jasaPinjaman / totalShuKoperasi) * nominal : 0);
+    }, 0);
+
+    // SHU dari semua komponen simpanan
+    const shuSimpanan = kompSimpanan.reduce((sum, k) => {
+      const nominal = totalShuKoperasi * (k.persentase / 100);
+      return sum + (totalSimpananSemua > 0 ? (totalSimpanan / totalSimpananSemua) * nominal : 0);
+    }, 0);
 
     return {
       ...a,
       jasa_pinjaman: jasaPinjaman,
       total_simpanan: totalSimpanan,
       shu_pinjaman: shuPinjaman,
-      shu_simpanan: shuSimpananVal,
-      total_shu: totalShu
+      shu_simpanan: shuSimpanan,
+      total_shu: shuPinjaman + shuSimpanan
     };
   });
 
+  // Ringkasan
+  const totalCadangan = komponenShu.filter(k=>k.tipe==='cadangan').reduce((s,k)=>s+totalShuKoperasi*(k.persentase/100),0);
+  const shuDibagi = shuAnggota.reduce((s,a)=>s+a.total_shu,0);
+
   res.render('shu', {
     param, tahunList, filterTahun,
-    shuKoperasi, cadangan, shuDibagi, porsiPeminjam, porsiSimpanan,
-    totalSimpananSemua, persen, shuAnggota,
+    shuKoperasi: totalShuKoperasi,
+    cadangan: totalCadangan,
+    shuDibagi,
+    totalSimpananSemua,
+    komponenShu, komponenHasil,
+    kompPeminjam, kompSimpanan,
+    shuAnggota,
     msg: req.query.msg || '', msgType: req.query.msgType || ''
   });
 });

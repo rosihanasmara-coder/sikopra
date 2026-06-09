@@ -12,6 +12,17 @@ db.exec('PRAGMA foreign_keys = ON');
 
 // Create tables
 db.exec(`
+CREATE TABLE IF NOT EXISTS shu_komponen (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  nama TEXT NOT NULL,
+  kode TEXT NOT NULL UNIQUE,
+  persentase REAL NOT NULL DEFAULT 0,
+  deskripsi TEXT,
+  tipe TEXT NOT NULL DEFAULT 'umum',
+  urutan INTEGER DEFAULT 0,
+  aktif INTEGER DEFAULT 1
+);
+
 CREATE TABLE IF NOT EXISTS parameter (
   id INTEGER PRIMARY KEY,
   kunci TEXT NOT NULL UNIQUE,
@@ -85,11 +96,16 @@ if (getCount('parameter') === 0) {
   const currentYear = new Date().getFullYear().toString();
   const ins = db.prepare('INSERT OR IGNORE INTO parameter (kunci, nilai, keterangan) VALUES (?, ?, ?)');
   ins.run('nama_koperasi', 'Koperasi Warga RT 05', 'Nama koperasi');
-  ins.run('persen_cadangan', '2', 'Persentase cadangan dari SHU');
-  ins.run('persen_shu_peminjam', '59', 'Persentase SHU untuk peminjam');
-  ins.run('persen_shu_simpanan', '39', 'Persentase SHU untuk simpanan');
   ins.run('jasa_pinjaman_default', '5', 'Persentase jasa pinjaman default');
   ins.run('tahun_aktif', currentYear, 'Tahun buku aktif');
+}
+
+// Insert default komponen SHU
+if (getCount('shu_komponen') === 0) {
+  const ins = db.prepare(`INSERT INTO shu_komponen (nama, kode, persentase, deskripsi, tipe, urutan) VALUES (?,?,?,?,?,?)`);
+  ins.run('Cadangan / KAS', 'cadangan', 2, 'Dana cadangan dan KAS koperasi', 'cadangan', 1);
+  ins.run('SHU Anggota Peminjam', 'peminjam', 59, 'Dibagi proporsional berdasarkan jasa pinjaman anggota', 'anggota_peminjam', 2);
+  ins.run('SHU Anggota Simpanan', 'simpanan', 39, 'Dibagi proporsional berdasarkan total simpanan anggota', 'anggota_simpanan', 3);
 }
 
 // Insert default tahun buku
