@@ -2,7 +2,8 @@ const { DatabaseSync } = require('node:sqlite');
 const path = require('path');
 const fs = require('fs');
 
-const dbDir = path.join(__dirname, 'db');
+// Gunakan VOLUME_PATH jika di Railway/cloud, fallback ke folder db lokal
+const dbDir = process.env.VOLUME_PATH || path.join(__dirname, 'db');
 if (!fs.existsSync(dbDir)) fs.mkdirSync(dbDir, { recursive: true });
 
 const db = new DatabaseSync(path.join(dbDir, 'sikopra.db'));
